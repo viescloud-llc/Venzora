@@ -1,15 +1,18 @@
 package com.viescloud.llc.venzora.model.authentication;
 
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Set;
 
 import com.viescloud.eco.viesspringutils.interfaces.annotation.Decoding;
 import com.viescloud.eco.viesspringutils.interfaces.annotation.Encoding;
 import com.viescloud.eco.viesspringutils.model.DecodingType;
 import com.viescloud.eco.viesspringutils.model.EncodingType;
+import com.viescloud.llc.venzora.model.address.Address;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -39,17 +42,21 @@ public class User implements Serializable {
     @Column(columnDefinition = "TEXT")
     private String alias;
 
-    @Column(columnDefinition = "TEXT", unique = true)
+    @Column(columnDefinition = "TEXT", unique = true, nullable = false)
     private String email;
 
-    @Column(columnDefinition = "TEXT", unique = true)
+    @Column(columnDefinition = "TEXT", unique = true, nullable = false)
     private String username;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", nullable = false)
     @Encoding(EncodingType.SHA256)
     @Decoding(DecodingType.NULL)
     private String password;
 
     @ManyToMany(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
     private Set<UserGroup> userGroups;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Builder.Default
+    private Set<Address> addresses = new HashSet<>();
 }

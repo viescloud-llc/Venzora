@@ -1,0 +1,52 @@
+server:
+  port: 8080
+
+jwt.secret: 'local'
+
+# Database configuration flags
+venzora.database.type: 'mysql'
+
+# Common datasource configuration
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+  h2:
+    console:
+      enabled: false
+      path: /h2-console
+      settings:
+        webAllowOthers: true
+        autostart: true
+  boot:
+    admin:
+      client:
+        url: url
+        enable: false
+        auto-registration: true
+        instance:
+          name: Venzora
+
+# actuator
+management:
+  endpoints:
+    health:
+      show-details: always
+    web:
+      exposure:
+        include: "*"
+
+# -----------------------------------H2 specific configuration-----------------------------------
+
+VENZORA_H2_DB: '/config/Coding/venzora-workspace/db/h2'
+VENZORA_H2_USERNAME: 'sa'
+VENZORA_H2_PASSWORD: 'password'
+
+# -----------------------------------MySQL specific configuration-----------------------------------
+
+VENZORA_MYSQL_HOST: '10.24.24.2'
+VENZORA_MYSQL_PORT: 3306
+VENZORA_MYSQL_DB: 'Venzora'
+VENZORA_MYSQL_USERNAME: 'venzora'
+VENZORA_MYSQL_PASSWORD: 'venzora'
+VENZORA_MYSQL_USE_SSL: 'false'

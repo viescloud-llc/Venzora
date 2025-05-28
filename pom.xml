@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>3.5.0</version>
+		<version>3.3.4</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.viescloud.llc</groupId>
@@ -28,27 +28,141 @@
 	</scm>
 	<properties>
 		<java.version>17</java.version>
+		<spring-cloud.version>2023.0.3</spring-cloud.version>
 	</properties>
+
 	<dependencies>
+
+		<!-- https://mvnrepository.com/artifact/de.codecentric/spring-boot-admin-starter-client -->
+		<dependency>
+			<groupId>de.codecentric</groupId>
+			<artifactId>spring-boot-admin-starter-client</artifactId>
+			<version>3.3.4</version>
+		</dependency>
+
+		<!-- <dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-rest</artifactId>
+		</dependency> -->
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter</artifactId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
 		</dependency>
+
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt</artifactId>
+			<version>0.9.1</version>
+		</dependency>
+
+		<!-- H2 Database -->
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- Mysql Database -->
+		<dependency>
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- Test tool -->
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- Logging -->
+
+		<dependency>
+			<groupId>de.siegmar</groupId>
+			<artifactId>logback-gelf</artifactId>
+			<version>4.0.2</version>
+		</dependency>
+
+		<!-- INI reader -->
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-configuration2</artifactId>
+			<version>2.11.0</version> <!-- Use the latest version -->
+		</dependency>
+
+		<!-- self host dependency -->
+		<dependency>
+			<groupId>com.viescloud.eco</groupId>
+			<artifactId>vies-spring-utils</artifactId>
+			<version>4.9.6</version>
+		</dependency>
 	</dependencies>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.cloud</groupId>
+				<artifactId>spring-cloud-dependencies</artifactId>
+				<version>${spring-cloud.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
 			</plugin>
 		</plugins>
+		<finalName>venzora</finalName>
 	</build>
+	<repositories>
+		<repository>
+			<id>netflix-candidates</id>
+			<name>Netflix Candidates</name>
+			<url>https://artifactory-oss.prod.netflix.net/artifactory/maven-oss-candidates</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+
+		<!--custom maven repo-->
+		<repository>
+			<id>reposilite-repository-releases</id>
+			<name>Reposilite Repository</name>
+			<url>https://reposilite.viescloud.com/releases</url>
+		</repository>
+	</repositories>
 
 </project>

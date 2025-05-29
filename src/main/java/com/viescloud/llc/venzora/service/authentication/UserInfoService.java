@@ -1,10 +1,13 @@
 package com.viescloud.llc.venzora.service.authentication;
 
+import org.springframework.stereotype.Service;
+
 import com.viescloud.eco.viesspringutils.repository.DatabaseCall;
 import com.viescloud.llc.venzora.dao.authentication.UserInfoDao;
 import com.viescloud.llc.venzora.model.authentication.UserInfo;
 import com.viescloud.llc.venzora.service.VenzoraService;
 
+@Service
 public class UserInfoService extends VenzoraService<Long, UserInfo, UserInfoDao> {
 
     public UserInfoService(DatabaseCall<Long, UserInfo> databaseCall, UserInfoDao repositoryDao) {

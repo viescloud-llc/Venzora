@@ -1,10 +1,13 @@
 package com.viescloud.llc.venzora.service.product;
 
+import org.springframework.stereotype.Service;
+
 import com.viescloud.eco.viesspringutils.repository.DatabaseCall;
 import com.viescloud.llc.venzora.dao.product.WishListDao;
 import com.viescloud.llc.venzora.model.product.WishList;
 import com.viescloud.llc.venzora.service.VenzoraService;
 
+@Service
 public class WishListService extends VenzoraService<Long, WishList, WishListDao> {
 
     public WishListService(DatabaseCall<Long, WishList> databaseCall, WishListDao repositoryDao) {

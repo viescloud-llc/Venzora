@@ -1,10 +1,13 @@
 package com.viescloud.llc.venzora.service.product;
 
+import org.springframework.stereotype.Service;
+
 import com.viescloud.eco.viesspringutils.repository.DatabaseCall;
 import com.viescloud.llc.venzora.dao.product.PurchaseOrderDao;
 import com.viescloud.llc.venzora.model.product.PurchaseOrder;
 import com.viescloud.llc.venzora.service.VenzoraService;
 
+@Service
 public class PurchaseOrderService extends VenzoraService<Long, PurchaseOrder, PurchaseOrderDao> {
 
     public PurchaseOrderService(DatabaseCall<Long, PurchaseOrder> databaseCall, PurchaseOrderDao repositoryDao) {

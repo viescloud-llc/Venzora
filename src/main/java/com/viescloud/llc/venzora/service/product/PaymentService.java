@@ -1,10 +1,13 @@
 package com.viescloud.llc.venzora.service.product;
 
+import org.springframework.stereotype.Service;
+
 import com.viescloud.eco.viesspringutils.repository.DatabaseCall;
 import com.viescloud.llc.venzora.dao.product.PaymentDao;
 import com.viescloud.llc.venzora.model.product.Payment;
 import com.viescloud.llc.venzora.service.VenzoraService;
 
+@Service
 public class PaymentService extends VenzoraService<Long, Payment, PaymentDao> {
 
     public PaymentService(DatabaseCall<Long, Payment> databaseCall, PaymentDao repositoryDao) {

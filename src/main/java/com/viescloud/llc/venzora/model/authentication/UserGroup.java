@@ -17,10 +17,10 @@ import lombok.NoArgsConstructor;
 public class UserGroup implements Serializable {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(columnDefinition = "TEXT", unique = true)
+    @Column(columnDefinition = "TEXT", unique = true, nullable = false)
     private String name;
 
     @Column(columnDefinition = "TEXT")

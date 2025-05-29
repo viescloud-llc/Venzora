@@ -4,6 +4,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.viescloud.eco.viesspringutils.config.jpa.BooleanConverter;
 import com.viescloud.eco.viesspringutils.config.jpa.StringHexEncodeConverter;
 import com.viescloud.eco.viesspringutils.model.UserAccess;
 
@@ -72,6 +73,7 @@ public class OpenIdProvider extends UserAccess {
     @ManyToMany(cascade = CascadeType.REFRESH, fetch = FetchType.EAGER)
     private Set<UserGroup> groupMappings;
 
-    @Column()
+    @Column(length = 20)
+    @Convert(converter = BooleanConverter.class)
     private Boolean autoUpdateUserInfo;
 }

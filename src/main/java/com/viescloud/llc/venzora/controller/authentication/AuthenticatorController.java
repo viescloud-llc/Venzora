@@ -138,13 +138,8 @@ public class AuthenticatorController {
     }
 
     private void updateUserInfo(User user, Map<String, Object> userInfo, OpenIdProvider provider) {
-        var alias = userInfo.get(provider.getAliasMapping());
         var email = userInfo.get(provider.getEmailMapping());
         var username = userInfo.get(provider.getUsernameMapping());
-
-        if(alias instanceof String value && !Json.isEquals(user.getAlias(), value)) {
-            user.setAlias(value);
-        }
 
         if(email instanceof String value && !Json.isEquals(user.getEmail(), value) && isValidEmail(value)) {
             user.setEmail(value);

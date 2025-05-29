@@ -1,5 +1,7 @@
 package com.viescloud.llc.venzora.model.address;
 
+import java.io.Serializable;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Enumerated;
@@ -11,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Embeddable
-public class Address {
+public class Address implements Serializable {
     @Column(columnDefinition = "TEXT")
     private String street;
     

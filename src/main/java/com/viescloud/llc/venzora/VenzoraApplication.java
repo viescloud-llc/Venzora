@@ -8,7 +8,10 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 import com.viescloud.eco.viesspringutils.ViesApplicationMinimal;
 
-@SpringBootApplication(exclude = {RedisRepositoriesAutoConfiguration.class, RedisAutoConfiguration.class})
+@SpringBootApplication(exclude = {
+    RedisRepositoriesAutoConfiguration.class,
+    RedisAutoConfiguration.class
+})
 @EnableAspectJAutoProxy(proxyTargetClass=true)
 public class VenzoraApplication extends ViesApplicationMinimal {
 

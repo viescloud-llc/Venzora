@@ -90,3 +90,10 @@ management:
 #     properties:
 #       hibernate:
 #         dialect: org.hibernate.dialect.MySQL8Dialect
+
+# -----------------------------------Redis specific configuration-----------------------------------
+# VENZORA_REDIS.ENABLED: false
+# VENZORA_REDIS.HOST: "localhost"
+# VENZORA_REDIS.PORT: 6379
+# VENZORA_REDIS.USERNAME: 
+# VENZORA_REDIS.PASSWORD: 

@@ -1,3 +1,11 @@
+spring.data.redis.repositories.enabled: false
+
+redis.enabled: ${VENZORA_REDIS.ENABLED}
+redis.host: ${VENZORA_REDIS.HOST}
+redis.port: ${VENZORA_REDIS.PORT}
+redis.username: ${VENZORA_REDIS.USERNAME}
+redis.password: ${VENZORA_REDIS.PASSWORD}
+
 spring.application.name: venzora
 eureka.client.enabled: false
 spring.profiles.active: local

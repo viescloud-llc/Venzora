@@ -15,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DatabaseConfiguration {
     
     // Type
-    @Value("${venzora.database.type:h2}")
+    @Value("${venzora.database.type:h2-memory}")
     private String databaseType;
     
     // H2 Configuration

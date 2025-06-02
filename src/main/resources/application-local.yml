@@ -50,3 +50,10 @@ VENZORA_MYSQL_DB: 'Venzora'
 VENZORA_MYSQL_USERNAME: 'venzora'
 VENZORA_MYSQL_PASSWORD: 'venzora'
 VENZORA_MYSQL_USE_SSL: 'false'
+
+# -----------------------------------Redis specific configuration-----------------------------------
+VENZORA_REDIS.ENABLED: true
+VENZORA_REDIS.HOST: "10.24.24.2"
+VENZORA_REDIS.PORT: 6379
+VENZORA_REDIS.USERNAME: 
+VENZORA_REDIS.PASSWORD: 

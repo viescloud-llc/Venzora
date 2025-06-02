@@ -60,12 +60,22 @@ public class DatabaseConfiguration {
             dataSource.setJdbcUrl(jdbcUrl);
             dataSource.setUsername(mysqlUsername);
             dataSource.setPassword(mysqlPassword);
-        } else {
+        } 
+        else if("h2".equalsIgnoreCase(databaseType)) {
             // Default to H2
             log.info("Configuring H2 database");
             dataSource.setDriverClassName("org.h2.Driver");
             String jdbcUrl = String.format("jdbc:h2:file:%s;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=TRUE;" + 
                 "CACHE_SIZE=8192;MAX_MEMORY_ROWS=10000;MV_STORE=TRUE;PAGE_SIZE=1024;COMPRESS=TRUE", h2DbPath);
+            dataSource.setJdbcUrl(jdbcUrl);
+            dataSource.setUsername(h2Username);
+            dataSource.setPassword(h2Password);
+        }
+        else {
+            log.info("Configuring H2 in-memory database");
+            dataSource.setDriverClassName("org.h2.Driver");
+            String jdbcUrl = String.format("jdbc:h2:mem:%s;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;" + 
+                "CACHE_SIZE=8192;MAX_MEMORY_ROWS=10000;MV_STORE=FALSE", "h2DbName");
             dataSource.setJdbcUrl(jdbcUrl);
             dataSource.setUsername(h2Username);
             dataSource.setPassword(h2Password);

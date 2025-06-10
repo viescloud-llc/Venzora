@@ -4,7 +4,7 @@ server:
 jwt.secret: ${JWT_SECRET:prod}
 
 # Database configuration flags
-venzora.database.type: ${VENZORA_DATABASE_TYPE:h2}  # h2 or mysql
+DATABASE_TYPE: ${DATABASE_TYPE:h2}  # h2 or mysql
 
 # Common datasource configuration
 spring:
@@ -13,7 +13,7 @@ spring:
       ddl-auto: update
   h2:
     console:
-      enabled: ${VENZORA_H2_CONSOLE_ENABLE:false}
+      enabled: ${H2_CONSOLE_ENABLE:false}
       path: /h2-console
       settings:
         webAllowOthers: true
@@ -21,11 +21,11 @@ spring:
   boot:
     admin:
       client:
-        url: ${VENZORA_ADMIN_CLIENT_URL:url}
-        enable: ${VENZORA_ADMIN_CLIENT_ENABLE:false}
+        url: ${ADMIN_CLIENT_URL:url}
+        enable: ${ADMIN_CLIENT_ENABLE:false}
         auto-registration: true
         instance:
-          name: ${spring.application.name:Venzora}
+          name: ${spring.application.name:Dns-manager}
 
 # actuator
 management:
@@ -38,24 +38,24 @@ management:
 
 # -----------------------------------H2 specific configuration-----------------------------------
 
-# VENZORA_H2_DB: '/etc/venzora/db/h2'
-# VENZORA_H2_USERNAME: 'sa'
-# VENZORA_H2_PASSWORD: 'password'
-# VENZORA_H2_CONSOLE_ENABLE: true
-# VENZORA_H2_CONSOLE_PATH: '/h2-console'
+# H2_DB: '/etc/dns-manager/db/h2'
+# H2_USERNAME: 'sa'
+# H2_PASSWORD: 'password'
+# H2_CONSOLE_ENABLE: true
+# H2_CONSOLE_PATH: '/h2-console'
 
 # spring:
 #   datasource:
-#     url: jdbc:h2:file:${VENZORA_H2_DB:/etc/venzora/db/h2};DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=TRUE;CACHE_SIZE=8192;MAX_MEMORY_ROWS=10000;MV_STORE=TRUE;PAGE_SIZE=1024;COMPRESS=TRUE
+#     url: jdbc:h2:file:${H2_DB:/etc/dns-manager/db/h2};DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=TRUE;CACHE_SIZE=8192;MAX_MEMORY_ROWS=10000;MV_STORE=TRUE;PAGE_SIZE=1024;COMPRESS=TRUE
 #     driverClassName: org.h2.Driver
-#     username: ${VENZORA_H2_USERNAME:sa}
-#     password: ${VENZORA_H2_PASSWORD:password}
+#     username: ${H2_USERNAME:sa}
+#     password: ${H2_PASSWORD:password}
 #     platform: h2
 #   jpa:
 #     database-platform: org.hibernate.dialect.H2Dialect
 #   h2:
 #     console:
-#       enabled: ${VENZORA_H2_CONSOLE:true}
+#       enabled: ${H2_CONSOLE:true}
 #       path: /h2-console
 #       settings:
 #         webAllowOthers: true
@@ -68,22 +68,22 @@ management:
 
 # -----------------------------------MySQL specific configuration-----------------------------------
 
-# VENZORA_MYSQL_HOST: 'localhost'
-# VENZORA_MYSQL_PORT: 3306
-# VENZORA_MYSQL_DB: 'venzora'
-# VENZORA_MYSQL_USERNAME: 'venzora'
-# VENZORA_MYSQL_PASSWORD: 'password'
-# VENZORA_MYSQL_USE_SSL: 'false'
+# MYSQL_HOST: 'localhost'
+# MYSQL_PORT: 3306
+# MYSQL_DB: 'dns-manager'
+# MYSQL_USERNAME: 'dns-manager'
+# MYSQL_PASSWORD: 'password'
+# MYSQL_USE_SSL: 'false'
 
 # spring:
 #   config:
 #     activate:
 #       on-profile: mysql
 #   datasource:
-#     url: jdbc:mysql://${VENZORA_MYSQL_HOST:localhost}:${VENZORA_MYSQL_PORT:3306}/${VENZORA_MYSQL_DB:venzora}?useSSL=${VENZORA_MYSQL_USE_SSL:false}&allowPublicKeyRetrieval=${VENZORA_MYSQL_ALLOW_PUBLIC_KEY:true}
+#     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/${MYSQL_DB:dns-manager}?useSSL=${MYSQL_USE_SSL:false}&allowPublicKeyRetrieval=${MYSQL_ALLOW_PUBLIC_KEY:true}
 #     driverClassName: com.mysql.cj.jdbc.Driver
-#     username: ${VENZORA_MYSQL_USERNAME:venzora}
-#     password: ${VENZORA_MYSQL_PASSWORD:password}
+#     username: ${MYSQL_USERNAME:dns-manager}
+#     password: ${MYSQL_PASSWORD:password}
 #     platform: mysql
 #   jpa:
 #     database-platform: org.hibernate.dialect.MySQL8Dialect
@@ -92,8 +92,8 @@ management:
 #         dialect: org.hibernate.dialect.MySQL8Dialect
 
 # -----------------------------------Redis specific configuration-----------------------------------
-# VENZORA_REDIS.ENABLED: false
-# VENZORA_REDIS.HOST: "localhost"
-# VENZORA_REDIS.PORT: 6379
-# VENZORA_REDIS.USERNAME: 
-# VENZORA_REDIS.PASSWORD: 
+# REDIS_ENABLED: false
+# REDIS_HOST: "localhost"
+# REDIS_PORT: 6379
+# REDIS_USERNAME: 
+# REDIS_PASSWORD: 

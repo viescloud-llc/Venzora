@@ -1,9 +1,11 @@
 package com.viescloud.llc.venzora.model.product;
 
-import com.viescloud.eco.viesspringutils.model.TrackedTimeStamp;
+import com.viescloud.eco.viesspringutils.model.TrackedTimeStampUserAccess;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,10 +17,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class WishList extends TrackedTimeStamp {
+public class WishProduct extends TrackedTimeStampUserAccess {
     
     @Id
-    private Long userId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(nullable = false)
     private Long productId;

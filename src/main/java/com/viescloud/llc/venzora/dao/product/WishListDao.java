@@ -1,9 +1,8 @@
 package com.viescloud.llc.venzora.dao.product;
 
-import org.springframework.data.jpa.repository.JpaRepository;
+import com.viescloud.eco.viesspringutils.dao.ViesUserAccessJpaRepository;
+import com.viescloud.llc.venzora.model.product.WishProduct;
 
-import com.viescloud.llc.venzora.model.product.WishList;
-
-public interface WishListDao extends JpaRepository<WishList, Long> {
+public interface WishListDao extends ViesUserAccessJpaRepository<WishProduct, Long> {
     
 }

@@ -1,19 +1,20 @@
 server:
-  port: 8080
+  port: 8085
 
 jwt.secret: 'local'
 
 # Database configuration flags
-venzora.database.type: 'mysql'
+DATABASE_TYPE: 'h2'
 
 # Common datasource configuration
 spring:
   jpa:
     hibernate:
-      ddl-auto: update
+      # ddl-auto: update
+      ddl-auto: create-drop
   h2:
     console:
-      enabled: false
+      enabled: true
       path: /h2-console
       settings:
         webAllowOthers: true
@@ -38,22 +39,22 @@ management:
 
 # -----------------------------------H2 specific configuration-----------------------------------
 
-VENZORA_H2_DB: '/config/Coding/venzora-workspace/db/h2'
-VENZORA_H2_USERNAME: 'sa'
-VENZORA_H2_PASSWORD: 'password'
+H2_DB: '/config/Coding/venzora-workspace/db/h2'
+H2_USERNAME: 'sa'
+H2_PASSWORD: 'password'
 
 # -----------------------------------MySQL specific configuration-----------------------------------
 
-VENZORA_MYSQL_HOST: '10.24.24.2'
-VENZORA_MYSQL_PORT: 3306
-VENZORA_MYSQL_DB: 'Venzora'
-VENZORA_MYSQL_USERNAME: 'venzora'
-VENZORA_MYSQL_PASSWORD: 'venzora'
-VENZORA_MYSQL_USE_SSL: 'false'
+MYSQL_HOST: '10.24.24.2'
+MYSQL_PORT: 3306
+MYSQL_DB: 'Venzora'
+MYSQL_USERNAME: 'venzora'
+MYSQL_PASSWORD: 'venzora'
+MYSQL_USE_SSL: 'false'
 
 # -----------------------------------Redis specific configuration-----------------------------------
-VENZORA_REDIS.ENABLED: true
-VENZORA_REDIS.HOST: "10.24.24.2"
-VENZORA_REDIS.PORT: 6379
-VENZORA_REDIS.USERNAME: 
-VENZORA_REDIS.PASSWORD: 
+REDIS_ENABLED: false
+REDIS_HOST: "localhost"
+REDIS_PORT: 6379
+REDIS_USERNAME: 
+REDIS_PASSWORD: 

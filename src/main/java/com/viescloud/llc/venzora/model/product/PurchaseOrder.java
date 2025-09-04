@@ -1,5 +1,6 @@
 package com.viescloud.llc.venzora.model.product;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -38,7 +39,7 @@ public class PurchaseOrder extends TrackedTimeStamp {
     private Integer quantity;
     
     @Column(nullable = false)
-    private Double totalPrice;
+    private BigDecimal totalPrice;
     
     @Column(nullable = false)
     private String status;

@@ -1,5 +1,7 @@
 package com.viescloud.llc.venzora.model.product;
 
+import java.math.BigDecimal;
+
 import com.viescloud.eco.viesspringutils.model.TrackedTimeStamp;
 
 import jakarta.persistence.Column;
@@ -32,5 +34,5 @@ public class Review extends TrackedTimeStamp {
     private String comment;
 
     @Column(nullable = false)
-    private Double rating;
+    private BigDecimal rating;
 }

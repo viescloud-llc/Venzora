@@ -1,6 +1,9 @@
 package com.viescloud.llc.venzora.model.product;
 
+import java.math.BigDecimal;
+
 import com.viescloud.eco.viesspringutils.model.TrackedTimeStamp;
+import com.viescloud.llc.venzora.model.product.type.PaymentMethodtype;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -33,5 +36,5 @@ public class Payment extends TrackedTimeStamp {
     private String paymentStatus;
 
     @Column(nullable = false)
-    private Double amount;
+    private BigDecimal amount;
 }

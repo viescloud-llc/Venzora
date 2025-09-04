@@ -1,0 +1,381 @@
+// Base Product Entity - represents the main product template
+@Entity
+@Table(name = "products")
+public class Product {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private String name;
+    
+    @Column(columnDefinition = "TEXT")
+    private String description;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private Category category;
+    
+    @Column(name = "base_price")
+    private BigDecimal basePrice;
+    
+    @Column(name = "base_sku")
+    private String baseSku;
+    
+    @Enumerated(EnumType.STRING)
+    private ProductStatus status;
+    
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
+    
+    // One product can have multiple variants
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<ProductVariant> variants = new ArrayList<>();
+    
+    // Dynamic attributes for the base product
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<ProductAttribute> attributes = new ArrayList<>();
+    
+    // Constructors, getters, setters...
+}
+
+// Product Variant Entity - represents specific combinations (Small-Red-T-Shirt)
+@Entity
+@Table(name = "product_variants")
+public class ProductVariant {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id", nullable = false)
+    private Product product;
+    
+    @Column(unique = true, nullable = false)
+    private String sku;
+    
+    private String variantName; // e.g., "Small Red T-Shirt"
+    
+    private BigDecimal price;
+    private Integer stockQuantity;
+    private BigDecimal weight;
+    
+    @Enumerated(EnumType.STRING)
+    private VariantStatus status;
+    
+    // Variant-specific attribute values
+    @OneToMany(mappedBy = "variant", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<VariantAttributeValue> attributeValues = new ArrayList<>();
+    
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+    
+    // Constructors, getters, setters...
+}
+
+// Attribute Definition - defines what attributes are available (Size, Color, Material)
+@Entity
+@Table(name = "attribute_definitions")
+public class AttributeDefinition {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(unique = true, nullable = false)
+    private String name; // e.g., "Size", "Color", "Material"
+    
+    private String displayName; // e.g., "Product Size"
+    
+    @Enumerated(EnumType.STRING)
+    private AttributeType type; // TEXT, NUMBER, BOOLEAN, SELECT, MULTI_SELECT
+    
+    private String unit; // e.g., "cm", "kg", "%"
+    
+    private boolean required;
+    private boolean variantLevel; // true if this attribute creates variants
+    
+    // Predefined options for SELECT/MULTI_SELECT types
+    @OneToMany(mappedBy = "attributeDefinition", cascade = CascadeType.ALL)
+    private List<AttributeOption> options = new ArrayList<>();
+    
+    // Constructors, getters, setters...
+}
+
+// Attribute Options - predefined values for select-type attributes
+@Entity
+@Table(name = "attribute_options")
+public class AttributeOption {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "attribute_definition_id")
+    private AttributeDefinition attributeDefinition;
+    
+    @Column(nullable = false)
+    private String value; // e.g., "Small", "Medium", "Red", "Blue"
+    
+    private String displayValue; // e.g., "Small (S)", "Ocean Blue"
+    private Integer sortOrder;
+    
+    // Constructors, getters, setters...
+}
+
+// Product Attribute - base product level attributes
+@Entity
+@Table(name = "product_attributes")
+public class ProductAttribute {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "product_id")
+    private Product product;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "attribute_definition_id")
+    private AttributeDefinition attributeDefinition;
+    
+    @Column(columnDefinition = "TEXT")
+    private String value;
+    
+    // Constructors, getters, setters...
+}
+
+// Variant Attribute Value - specific attribute values for each variant
+@Entity
+@Table(name = "variant_attribute_values")
+public class VariantAttributeValue {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "variant_id")
+    private ProductVariant variant;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "attribute_definition_id")
+    private AttributeDefinition attributeDefinition;
+    
+    @Column(columnDefinition = "TEXT")
+    private String value;
+    
+    // For SELECT type attributes, reference to the option
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "attribute_option_id")
+    private AttributeOption attributeOption;
+    
+    // Constructors, getters, setters...
+}
+
+// Category Entity
+@Entity
+@Table(name = "categories")
+public class Category {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    @Column(nullable = false)
+    private String name;
+    
+    private String description;
+    
+    // Self-referencing for category hierarchy
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Category parent;
+    
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
+    private List<Category> children = new ArrayList<>();
+    
+    // Category-specific attribute definitions
+    @ManyToMany
+    @JoinTable(
+        name = "category_attribute_definitions",
+        joinColumns = @JoinColumn(name = "category_id"),
+        inverseJoinColumns = @JoinColumn(name = "attribute_definition_id")
+    )
+    private List<AttributeDefinition> attributeDefinitions = new ArrayList<>();
+    
+    // Constructors, getters, setters...
+}
+
+// Enums
+enum ProductStatus {
+    DRAFT, ACTIVE, INACTIVE, DISCONTINUED
+}
+
+enum VariantStatus {
+    ACTIVE, INACTIVE, OUT_OF_STOCK
+}
+
+enum AttributeType {
+    TEXT, NUMBER, BOOLEAN, SELECT, MULTI_SELECT, DATE, JSON
+}
+
+// Service class for managing products and variants
+@Service
+@Transactional
+public class ProductService {
+    
+    @Autowired
+    private ProductRepository productRepository;
+    
+    @Autowired
+    private ProductVariantRepository variantRepository;
+    
+    @Autowired
+    private AttributeDefinitionRepository attributeDefinitionRepository;
+    
+    // Create a product with variants
+    public Product createProductWithVariants(ProductCreationRequest request) {
+        Product product = new Product();
+        product.setName(request.getName());
+        product.setDescription(request.getDescription());
+        product.setBasePrice(request.getBasePrice());
+        product.setBaseSku(request.getBaseSku());
+        product.setStatus(ProductStatus.DRAFT);
+        product.setCreatedAt(LocalDateTime.now());
+        
+        product = productRepository.save(product);
+        
+        // Create variants based on attribute combinations
+        if (request.getVariantAttributes() != null && !request.getVariantAttributes().isEmpty()) {
+            List<ProductVariant> variants = generateVariants(product, request.getVariantAttributes());
+            variantRepository.saveAll(variants);
+        }
+        
+        return product;
+    }
+    
+    // Generate all possible variant combinations
+    private List<ProductVariant> generateVariants(Product product, 
+            Map<String, List<String>> variantAttributes) {
+        
+        List<ProductVariant> variants = new ArrayList<>();
+        List<Map<String, String>> combinations = generateCombinations(variantAttributes);
+        
+        for (Map<String, String> combination : combinations) {
+            ProductVariant variant = new ProductVariant();
+            variant.setProduct(product);
+            variant.setSku(generateVariantSku(product.getBaseSku(), combination));
+            variant.setVariantName(generateVariantName(product.getName(), combination));
+            variant.setPrice(product.getBasePrice()); // Can be adjusted per variant
+            variant.setStockQuantity(0);
+            variant.setStatus(VariantStatus.ACTIVE);
+            variant.setCreatedAt(LocalDateTime.now());
+            
+            // Create attribute values for this variant
+            for (Map.Entry<String, String> entry : combination.entrySet()) {
+                VariantAttributeValue attributeValue = new VariantAttributeValue();
+                attributeValue.setVariant(variant);
+                attributeValue.setValue(entry.getValue());
+                
+                // Find attribute definition by name
+                AttributeDefinition attrDef = attributeDefinitionRepository
+                    .findByName(entry.getKey())
+                    .orElseThrow(() -> new RuntimeException("Attribute not found: " + entry.getKey()));
+                
+                attributeValue.setAttributeDefinition(attrDef);
+                variant.getAttributeValues().add(attributeValue);
+            }
+            
+            variants.add(variant);
+        }
+        
+        return variants;
+    }
+    
+    // Helper method to generate all combinations
+    private List<Map<String, String>> generateCombinations(Map<String, List<String>> attributes) {
+        List<Map<String, String>> result = new ArrayList<>();
+        generateCombinationsRecursive(attributes, new ArrayList<>(attributes.keySet()), 
+                                    0, new HashMap<>(), result);
+        return result;
+    }
+    
+    private void generateCombinationsRecursive(Map<String, List<String>> attributes,
+                                             List<String> keys, int index,
+                                             Map<String, String> current,
+                                             List<Map<String, String>> result) {
+        if (index == keys.size()) {
+            result.add(new HashMap<>(current));
+            return;
+        }
+        
+        String key = keys.get(index);
+        for (String value : attributes.get(key)) {
+            current.put(key, value);
+            generateCombinationsRecursive(attributes, keys, index + 1, current, result);
+        }
+        current.remove(key);
+    }
+    
+    private String generateVariantSku(String baseSku, Map<String, String> attributes) {
+        StringBuilder sku = new StringBuilder(baseSku);
+        attributes.values().forEach(value -> 
+            sku.append("-").append(value.toUpperCase().substring(0, Math.min(3, value.length()))));
+        return sku.toString();
+    }
+    
+    private String generateVariantName(String baseName, Map<String, String> attributes) {
+        return String.join(" ", attributes.values()) + " " + baseName;
+    }
+}
+
+// DTOs for API
+public class ProductCreationRequest {
+    private String name;
+    private String description;
+    private BigDecimal basePrice;
+    private String baseSku;
+    private Long categoryId;
+    
+    // Map of attribute name to list of values
+    // e.g., {"Size": ["Small", "Medium"], "Color": ["Red", "Blue"]}
+    private Map<String, List<String>> variantAttributes;
+    
+    // Base product attributes
+    private Map<String, String> productAttributes;
+    
+    // Getters and setters...
+}
+
+// Repository interfaces
+@Repository
+public interface ProductRepository extends JpaRepository<Product, Long> {
+    List<Product> findByStatus(ProductStatus status);
+    List<Product> findByCategoryId(Long categoryId);
+    
+    @Query("SELECT p FROM Product p LEFT JOIN FETCH p.variants WHERE p.id = :id")
+    Optional<Product> findByIdWithVariants(@Param("id") Long id);
+}
+
+@Repository
+public interface ProductVariantRepository extends JpaRepository<ProductVariant, Long> {
+    List<ProductVariant> findByProductId(Long productId);
+    Optional<ProductVariant> findBySku(String sku);
+    
+    @Query("SELECT v FROM ProductVariant v " +
+           "JOIN v.attributeValues av " +
+           "JOIN av.attributeDefinition ad " +
+           "WHERE v.product.id = :productId " +
+           "AND ad.name = :attributeName " +
+           "AND av.value = :attributeValue")
+    List<ProductVariant> findByProductIdAndAttribute(@Param("productId") Long productId,
+                                                   @Param("attributeName") String attributeName,
+                                                   @Param("attributeValue") String attributeValue);
+}
+
+@Repository
+public interface AttributeDefinitionRepository extends JpaRepository<AttributeDefinition, Long> {
+    Optional<AttributeDefinition> findByName(String name);
+    List<AttributeDefinition> findByVariantLevelTrue();
+}

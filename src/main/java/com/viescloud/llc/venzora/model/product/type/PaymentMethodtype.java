@@ -1,4 +1,4 @@
-package com.viescloud.llc.venzora.model.product;
+package com.viescloud.llc.venzora.model.product.type;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

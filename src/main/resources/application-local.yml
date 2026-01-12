@@ -10,8 +10,8 @@ DATABASE_TYPE: 'mysql'
 spring:
   jpa:
     hibernate:
-      # ddl-auto: update
-      ddl-auto: create-drop
+      ddl-auto: update
+      # ddl-auto: create-drop
   h2:
     console:
       enabled: true

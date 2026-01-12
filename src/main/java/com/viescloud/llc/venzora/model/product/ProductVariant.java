@@ -64,5 +64,5 @@ public class ProductVariant extends TrackedTimeStamp {
     
     // Variant-specific attribute values
     @OneToMany(mappedBy = "variant", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<VariantAttributeValue> attributeValues = new ArrayList<>();
+    private List<ProductVariantAttribute> attributeValues = new ArrayList<>();
 }

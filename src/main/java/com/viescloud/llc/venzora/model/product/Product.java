@@ -1,9 +1,7 @@
 package com.viescloud.llc.venzora.model.product;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import com.viescloud.eco.viesspringutils.model.TrackedTimeStamp;
@@ -61,9 +59,12 @@ public class Product extends TrackedTimeStamp {
 
     // One product can have multiple variants
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<ProductVariant> variants = new ArrayList<>();
+    private Set<ProductVariant> variants = new HashSet<>();
     
     // Dynamic attributes for the base product
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<ProductAttribute> attributes = new ArrayList<>();
+    private Set<ProductAttribute> attributes = new HashSet<>();
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    private Set<ProductMedia> medias = new HashSet<>();
 }

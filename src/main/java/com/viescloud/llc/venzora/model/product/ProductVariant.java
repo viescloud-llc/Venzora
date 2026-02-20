@@ -59,7 +59,7 @@ public class ProductVariant extends TrackedTimeStamp {
     private ProductVariantStatus status;
 
     @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    private Set<ProductMedia> media = new HashSet<>();
+    private Set<ProductMedia> medias = new HashSet<>();
 
     // Variant-specific attribute values
     @OneToMany(mappedBy = "variant", cascade = CascadeType.ALL, fetch = FetchType.EAGER)

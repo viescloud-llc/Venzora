@@ -2,9 +2,13 @@ package com.viescloud.llc.venzora.model.product;
 
 import java.io.Serializable;
 
+import com.viescloud.llc.venzora.model.product.type.ProductMediaType;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -36,8 +40,8 @@ public class ProductMedia implements Serializable {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String url;
 
-    @Column(nullable = false)
-    private String mediaType; // IMAGE, VIDEO, etc.
+    @Enumerated(EnumType.STRING)
+    private ProductMediaType mediaType; // IMAGE, VIDEO, etc.
 
     @Column(columnDefinition = "TEXT")
     private String altText;

@@ -11,7 +11,6 @@ import com.viescloud.llc.venzora.model.product.type.ProductVariantStatus;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -59,9 +58,9 @@ public class ProductVariant extends TrackedTimeStamp {
     @Enumerated(EnumType.STRING)
     private ProductVariantStatus status;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    private Set<String> mediaUrls = new HashSet<>();
-    
+    @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    private Set<ProductMedia> media = new HashSet<>();
+
     // Variant-specific attribute values
     @OneToMany(mappedBy = "variant", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<ProductVariantAttribute> attributeValues = new ArrayList<>();

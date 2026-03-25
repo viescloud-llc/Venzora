@@ -4,7 +4,8 @@ server:
 jwt.secret: 'local'
 
 # Database configuration flags
-DATABASE_TYPE: 'mysql'
+# DATABASE_TYPE: 'mysql'
+DATABASE_TYPE: 'h2-memory'
 
 # Common datasource configuration
 spring:

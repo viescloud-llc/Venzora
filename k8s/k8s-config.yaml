@@ -1,0 +1,119 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: venzora-deployment
+  namespace: venzora
+  labels:
+    app: venzora
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: venzora
+  template:
+    metadata:
+      labels:
+        app: venzora
+    spec:
+      containers:
+      - name: venzora-deployment
+        image: venzora:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 500m
+            memory: 512Mi
+          requests:
+            cpu: 250m
+            memory: 256Mi
+        envFrom:
+        - secretRef:
+            name: venzora-secret
+        livenessProbe:
+          httpGet:
+            path: /healthCheck
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthCheck
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: venzora-service
+  namespace: venzora
+  labels:
+    app: venzora
+spec:
+  type: LoadBalancer
+  selector:
+    app: venzora
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+  loadBalancerIP: 10.23.3.30
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: venzora-secret
+  namespace: venzora
+  labels:
+    app: venzora
+type: Opaque
+stringData:
+  SERVER_PORT: '80'
+  JWT_SECRET: '{{ JWT_SECRET }}'
+  COQUI_TTS_URL: '{{ COQUI_TTS_URL }}'
+  OPENAI_TOKEN: '{{ OPENAI_TOKEN }}'
+  ADMIN_CLIENT_ENABLE: 'false'
+  # ADMIN_CLIENT_URL: 'http://localhost:8080'
+  DATABASE_TYPE: 'mysql'  # h2 or h2-memory or mysql
+  OBJECT_STORAGE_TYPE: 's3-minio' #db or s3-minio or smb
+  # -----------------------------------H2 specific configuration-----------------------------------
+  # H2_DB: '/etc/${spring.application.name}/db/h2'
+  # H2_USERNAME: 'sa'
+  # H2_PASSWORD: 'password'
+  # H2_CONSOLE_ENABLE: 'true'
+  # H2_CONSOLE_PATH: '/h2-console'
+  # -----------------------------------MySQL specific configuration-----------------------------------
+  MYSQL_HOST: '{{ MYSQL_IPV4 }}'
+  MYSQL_PORT: '{{ MYSQL_PORT }}'
+  MYSQL_DB: 'Venzora'
+  MYSQL_USERNAME: '{{ MYSQL_USERNAME }}'
+  MYSQL_PASSWORD: '{{ MYSQL_PASSWORD }}'
+  MYSQL_USE_SSL: 'false'
+  # -----------------------------------Redis specific configuration-----------------------------------
+  # REDIS_ENABLED: false
+  # REDIS_HOST: "localhost"
+  # REDIS_PORT: 6379
+  # REDIS_USERNAME: 
+  # REDIS_PASSWORD: 
+  # -----------------------------------Object Storage specific configuration-----------------------------------
+  # SMB_HOST: localhost
+  # SMB_PORT: 445
+  # SMB_DOMAIN: domain
+  # SMB_USERNAME: username
+  # SMB_PASSWORD: password
+  # SMB_SHARE_AND_DIR: Business/data
+
+  S3_URL: '{{ MINIO_S3_URL }}'
+  S3_USERNAME: '{{ MINIO_S3_USERNAME }}'
+  S3_PASSWORD: '{{ MINIO_S3_PASSWORD }}'
+  S3_BUCKET: 'venzora'
+

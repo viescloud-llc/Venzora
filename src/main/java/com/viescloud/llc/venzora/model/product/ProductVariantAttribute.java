@@ -32,7 +32,7 @@ public class ProductVariantAttribute implements Serializable {
     @JoinColumn(name = "attribute_definition_id")
     private AttributeDefinition attributeDefinition;
     
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "product_variant_attribute_value", columnDefinition = "TEXT")
     private String value;
     
     // For SELECT type attributes, reference to the option

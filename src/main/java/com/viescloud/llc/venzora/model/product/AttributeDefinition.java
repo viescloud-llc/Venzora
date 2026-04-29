@@ -53,6 +53,6 @@ public class AttributeDefinition implements Serializable {
     private Boolean variantLevel; // true if this attribute creates variants
     
     // Predefined options for SELECT/MULTI_SELECT types
-    @OneToMany(mappedBy = "attributeDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "attributeDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<AttributeOption> options = new ArrayList<>();
 }

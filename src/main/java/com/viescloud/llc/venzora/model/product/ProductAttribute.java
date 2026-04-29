@@ -32,6 +32,6 @@ public class ProductAttribute implements Serializable {
     @JoinColumn(name = "attribute_definition_id")
     private AttributeDefinition attributeDefinition;
     
-    @Column(columnDefinition = "TEXT")
+    @Column(name = "product_attribute_value", columnDefinition = "TEXT")
     private String value;
 }

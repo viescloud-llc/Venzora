@@ -28,7 +28,7 @@ public class AttributeOption implements Serializable {
     @JoinColumn(name = "attribute_definition_id")
     private AttributeDefinition attributeDefinition;
     
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(name = "attribute_option_value", columnDefinition = "TEXT", nullable = false)
     private String value; // e.g., "Small", "Medium", "Red", "Blue"
     
     @Column(columnDefinition = "TEXT")

@@ -5,14 +5,14 @@ jwt.secret: 'local'
 
 # Database configuration flags
 # DATABASE_TYPE: 'mysql'
-DATABASE_TYPE: 'h2-memory'
+DATABASE_TYPE: 'h2'
 
 # Common datasource configuration
 spring:
   jpa:
     hibernate:
-      ddl-auto: update
-      # ddl-auto: create-drop
+      # ddl-auto: update
+      ddl-auto: create-drop
   h2:
     console:
       enabled: true
@@ -40,9 +40,9 @@ management:
 
 # -----------------------------------H2 specific configuration-----------------------------------
 
-H2_DB: '/config/Coding/venzora-workspace/db/h2'
+H2_DB: './h2'
 H2_USERNAME: 'sa'
-H2_PASSWORD: 'password'
+H2_PASSWORD: ''
 
 # -----------------------------------MySQL specific configuration-----------------------------------
 

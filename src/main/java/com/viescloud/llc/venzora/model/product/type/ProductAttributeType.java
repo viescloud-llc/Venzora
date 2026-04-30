@@ -10,9 +10,10 @@ public enum ProductAttributeType {
     NUMBER("NUMBER"),
     BOOLEAN("BOOLEAN"),
     SELECT("SELECT"),
-    MULTISELECT("MULTISELECT"),
+    MULTI_SELECT("MULTI_SELECT"),
     DATE("DATE"),
-    JSON("JSON");
+    TIME("TIME"),
+    DATE_TIME("DATE_TIME");
 
     private final String value;
 }

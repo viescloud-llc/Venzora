@@ -3,7 +3,7 @@ package com.viescloud.llc.venzora.model.product;
 import java.io.Serializable;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -32,11 +32,6 @@ public class ProductVariantAttribute implements Serializable {
     @JoinColumn(name = "attribute_definition_id")
     private AttributeDefinition attributeDefinition;
     
-    @Column(name = "product_variant_attribute_value", columnDefinition = "TEXT")
-    private String value;
-    
-    // For SELECT type attributes, reference to the option
-    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
-    @JoinColumn(name = "attribute_option_id")
-    private AttributeOption attributeOption;
+    @Embedded
+    private AttributeValue attributeValue;
 }

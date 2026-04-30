@@ -6,6 +6,7 @@ import java.util.Set;
 
 import com.viescloud.eco.viesspringutils.model.TrackedTimeStamp;
 import com.viescloud.llc.venzora.model.product.type.ProductStatus;
+import com.viescloud.llc.venzora.model.share_enum.Currency;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -44,6 +45,10 @@ public class Product extends TrackedTimeStamp {
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH}, optional = false)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Currency currency;
     
     @Column(nullable = false)
     private BigDecimal basePrice;

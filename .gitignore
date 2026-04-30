@@ -34,3 +34,4 @@ build/
 k8s/k8s_builder.py
 .h2
 h2.mv.db
+h2.trace.db

@@ -24,5 +24,4 @@ public class AttributeDefinitionService extends VenzoraService<Long, AttributeDe
     public void setIdFieldValue(AttributeDefinition object, Long id) {
         object.setId(id);
     }
-    
 }

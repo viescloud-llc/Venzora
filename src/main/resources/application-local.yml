@@ -11,8 +11,8 @@ DATABASE_TYPE: 'h2'
 spring:
   jpa:
     hibernate:
-      # ddl-auto: update
-      ddl-auto: create-drop
+      ddl-auto: update
+      # ddl-auto: create-drop
   h2:
     console:
       enabled: true

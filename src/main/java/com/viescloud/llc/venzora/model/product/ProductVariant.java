@@ -6,6 +6,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import com.viescloud.eco.viesspringutils.model.TrackedTimeStamp;
 import com.viescloud.llc.venzora.model.product.type.ProductVariantStatus;
 
@@ -38,6 +41,7 @@ public class ProductVariant extends TrackedTimeStamp {
     
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
     @JoinColumn(name = "product_id", nullable = false)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Product product;
     
     @Column(columnDefinition = "TEXT", unique = true, nullable = false)
@@ -59,9 +63,11 @@ public class ProductVariant extends TrackedTimeStamp {
     private ProductVariantStatus status;
 
     @OneToMany(mappedBy = "productVariant", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<ProductMedia> medias = new HashSet<>();
 
     // Variant-specific attribute values
     @OneToMany(mappedBy = "variant", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<ProductVariantAttribute> attributeValues = new ArrayList<>();
 }

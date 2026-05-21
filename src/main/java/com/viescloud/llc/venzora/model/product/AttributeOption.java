@@ -26,11 +26,6 @@ public class AttributeOption implements Serializable {
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     private Long id;
 
-    @JsonIgnore
-    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
-    @JoinColumn(name = "attribute_definition_id")
-    private AttributeDefinition attributeDefinition;
-    
     @Column(name = "attribute_option_value", columnDefinition = "TEXT", nullable = false)
     private String value; // e.g., "Small", "Medium", "Red", "Blue"
     
@@ -39,4 +34,9 @@ public class AttributeOption implements Serializable {
 
     @Column
     private Long sortOrder;
+
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
+    @JoinColumn(name = "attribute_definition_id")
+    private AttributeDefinition attributeDefinition;
 }

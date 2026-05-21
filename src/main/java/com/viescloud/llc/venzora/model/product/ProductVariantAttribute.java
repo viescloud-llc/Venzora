@@ -2,6 +2,9 @@ package com.viescloud.llc.venzora.model.product;
 
 import java.io.Serializable;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -26,6 +29,7 @@ public class ProductVariantAttribute implements Serializable {
     
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
     @JoinColumn(name = "variant_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private ProductVariant variant;
     
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})

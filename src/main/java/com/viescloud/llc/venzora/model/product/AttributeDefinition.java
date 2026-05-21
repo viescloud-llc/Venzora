@@ -4,6 +4,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import com.viescloud.eco.viesspringutils.config.jpa.BooleanConverter;
 import com.viescloud.llc.venzora.model.product.type.ProductAttributeType;
 
@@ -53,6 +56,7 @@ public class AttributeDefinition implements Serializable {
     private Boolean variantLevel; // true if this attribute creates variants
     
     // Predefined options for SELECT/MULTI_SELECT types
-    @OneToMany(mappedBy = "attributeDefinition", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "attributeDefinition", cascade = {CascadeType.DETACH, CascadeType.REFRESH, CascadeType.PERSIST, CascadeType.MERGE}, fetch = FetchType.EAGER)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<AttributeOption> options = new ArrayList<>();
 }

@@ -3,6 +3,9 @@ package com.viescloud.llc.venzora.model.product;
 import java.math.BigDecimal;
 import java.util.List;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.viescloud.eco.viesspringutils.config.jpa.BooleanConverter;
 import com.viescloud.eco.viesspringutils.config.jpa.DateConverter;
@@ -54,8 +57,10 @@ public class AttributeValue {
     private DateTime dateTimeValue;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
+    @OnDelete(action = OnDeleteAction.SET_NULL)
     private AttributeOption selectValue;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<AttributeOption> multiSelectValues;
 }

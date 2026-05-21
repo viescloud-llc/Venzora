@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import com.viescloud.eco.viesspringutils.model.TrackedTimeStamp;
 import com.viescloud.llc.venzora.model.product.type.ProductStatus;
 import com.viescloud.llc.venzora.model.share_enum.Currency;
@@ -64,12 +67,15 @@ public class Product extends TrackedTimeStamp {
 
     // One product can have multiple variants
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<ProductVariant> variants = new HashSet<>();
     
     // Dynamic attributes for the base product
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<ProductAttribute> attributes = new HashSet<>();
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<ProductMedia> medias = new HashSet<>();
 }

@@ -3,7 +3,9 @@ package com.viescloud.llc.venzora.model.product;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
+import com.viescloud.eco.viesspringutils.interfaces.annotation.GeneratedUuidV7;
 import com.viescloud.eco.viesspringutils.model.TrackedTimeStampUserAccess;
 import com.viescloud.llc.venzora.model.address.Address;
 import com.viescloud.llc.venzora.model.product.type.OrderStatus;
@@ -17,11 +19,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -36,14 +37,14 @@ import lombok.NoArgsConstructor;
 public class Order extends TrackedTimeStampUserAccess {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedUuidV7
+    private UUID id;
 
     @Column(nullable = false, unique = true)
     private String orderNumber;
 
     @Column(nullable = false)
-    private Long userId;
+    private UUID userId;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();

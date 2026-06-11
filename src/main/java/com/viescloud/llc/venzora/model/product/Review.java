@@ -1,13 +1,15 @@
 package com.viescloud.llc.venzora.model.product;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
+import com.viescloud.eco.viesspringutils.interfaces.annotation.GeneratedUuidV7;
 import com.viescloud.eco.viesspringutils.model.TrackedTimeStamp;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -21,14 +23,14 @@ import lombok.NoArgsConstructor;
 public class Review extends TrackedTimeStamp {
     
     @Id
-    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedUuidV7
+    private UUID id;
 
     @Column(nullable = false)
-    private Long userId;
+    private UUID userId;
 
     @Column(nullable = false)
-    private Long productId;
+    private UUID productId;
 
     @Column(columnDefinition = "TEXT")
     private String comment;

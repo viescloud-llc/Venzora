@@ -1,5 +1,7 @@
 package com.viescloud.llc.venzora.model.authentication;
 
+import java.util.UUID;
+
 import com.viescloud.eco.viesspringutils.config.jpa.BooleanConverter;
 import com.viescloud.eco.viesspringutils.model.TrackedTimeStamp;
 
@@ -7,6 +9,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -20,7 +23,7 @@ import lombok.NoArgsConstructor;
 public class UserInfo extends TrackedTimeStamp {
 
     @Id
-    private Long userId;
+    private UUID userId;
     
     @Column(columnDefinition = "TEXT")
     private String firstName;

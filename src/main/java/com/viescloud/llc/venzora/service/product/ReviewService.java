@@ -1,5 +1,7 @@
 package com.viescloud.llc.venzora.service.product;
 
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 
 import com.viescloud.eco.viesspringutils.repository.DatabaseCall;
@@ -8,19 +10,19 @@ import com.viescloud.llc.venzora.model.product.Review;
 import com.viescloud.llc.venzora.service.VenzoraService;
 
 @Service
-public class ReviewService extends VenzoraService<Long, Review, ReviewDao> {
+public class ReviewService extends VenzoraService<UUID, Review, ReviewDao> {
 
-    public ReviewService(DatabaseCall<Long, Review> databaseCall, ReviewDao repositoryDao) {
+    public ReviewService(DatabaseCall<UUID, Review> databaseCall, ReviewDao repositoryDao) {
         super(databaseCall, repositoryDao);
     }
 
     @Override
-    public Long getIdFieldValue(Review object) {
+    public UUID getIdFieldValue(Review object) {
         return object.getId();
     }
 
     @Override
-    public void setIdFieldValue(Review object, Long id) {
+    public void setIdFieldValue(Review object, UUID id) {
         object.setId(id);
     }
     

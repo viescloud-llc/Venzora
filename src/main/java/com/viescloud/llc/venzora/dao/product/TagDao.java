@@ -1,9 +1,11 @@
 package com.viescloud.llc.venzora.dao.product;
 
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.viescloud.llc.venzora.model.product.Tag;
 
-public interface TagDao extends JpaRepository<Tag, Long> {
+public interface TagDao extends JpaRepository<Tag, UUID> {
     
 }

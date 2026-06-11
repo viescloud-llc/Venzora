@@ -1,5 +1,7 @@
 package com.viescloud.llc.venzora.service.product;
 
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 
 import com.viescloud.eco.viesspringutils.repository.DatabaseCall;
@@ -8,20 +10,20 @@ import com.viescloud.llc.venzora.model.product.AttributeDefinition;
 import com.viescloud.llc.venzora.service.VenzoraService;
 
 @Service
-public class AttributeDefinitionService extends VenzoraService<Long, AttributeDefinition, AttributeDefinitionDao> {
+public class AttributeDefinitionService extends VenzoraService<UUID, AttributeDefinition, AttributeDefinitionDao> {
 
-    public AttributeDefinitionService(DatabaseCall<Long, AttributeDefinition> databaseCall,
+    public AttributeDefinitionService(DatabaseCall<UUID, AttributeDefinition> databaseCall,
             AttributeDefinitionDao repositoryDao) {
         super(databaseCall, repositoryDao);
     }
 
     @Override
-    public Long getIdFieldValue(AttributeDefinition object) {
+    public UUID getIdFieldValue(AttributeDefinition object) {
         return object.getId();
     }
 
     @Override
-    public void setIdFieldValue(AttributeDefinition object, Long id) {
+    public void setIdFieldValue(AttributeDefinition object, UUID id) {
         object.setId(id);
     }
 }

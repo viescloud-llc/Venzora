@@ -1,5 +1,7 @@
 package com.viescloud.llc.venzora.controller.product;
 
+import java.util.UUID;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -9,7 +11,7 @@ import com.viescloud.llc.venzora.service.product.AttributeOptionService;
 
 @RestController
 @RequestMapping("/api/v1/product/attribute/options")
-public class AttributeOptionController extends ViesAutoAdminCheckController<Long, AttributeOption, AttributeOptionService> {
+public class AttributeOptionController extends ViesAutoAdminCheckController<UUID, AttributeOption, AttributeOptionService> {
 
     public AttributeOptionController(AttributeOptionService service) {
         super(service);

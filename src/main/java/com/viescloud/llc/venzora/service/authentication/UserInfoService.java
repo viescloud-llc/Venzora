@@ -1,5 +1,7 @@
 package com.viescloud.llc.venzora.service.authentication;
 
+import java.util.UUID;
+
 import org.springframework.stereotype.Service;
 
 import com.viescloud.eco.viesspringutils.repository.DatabaseCall;
@@ -8,20 +10,20 @@ import com.viescloud.llc.venzora.model.authentication.UserInfo;
 import com.viescloud.llc.venzora.service.VenzoraService;
 
 @Service
-public class UserInfoService extends VenzoraService<Long, UserInfo, UserInfoDao> {
+public class UserInfoService extends VenzoraService<UUID, UserInfo, UserInfoDao> {
 
-    public UserInfoService(DatabaseCall<Long, UserInfo> databaseCall, UserInfoDao repositoryDao) {
+    public UserInfoService(DatabaseCall<UUID, UserInfo> databaseCall, UserInfoDao repositoryDao) {
         super(databaseCall, repositoryDao);
     }
 
     @Override
-    public Long getIdFieldValue(UserInfo object) {
+    public UUID getIdFieldValue(UserInfo object) {
         return object.getUserId();
     }
 
     @Override
-    public void setIdFieldValue(UserInfo object, Long id) {
+    public void setIdFieldValue(UserInfo object, UUID id) {
         object.setUserId(id);
     }
-    
+
 }

@@ -3,10 +3,12 @@ package com.viescloud.llc.venzora.model.product;
 import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import com.viescloud.eco.viesspringutils.interfaces.annotation.GeneratedUuidV7;
 import com.viescloud.eco.viesspringutils.model.TrackedTimeStamp;
 import com.viescloud.llc.venzora.model.product.type.ProductStatus;
 import com.viescloud.llc.venzora.model.share_enum.Currency;
@@ -17,12 +19,12 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -36,8 +38,8 @@ import lombok.NoArgsConstructor;
 public class Product extends TrackedTimeStamp {
     
     @Id
-    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedUuidV7
+    private UUID id;
     
     @Column(columnDefinition = "TEXT", nullable = false)
     private String name;

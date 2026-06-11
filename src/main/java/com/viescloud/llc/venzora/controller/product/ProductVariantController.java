@@ -1,5 +1,7 @@
 package com.viescloud.llc.venzora.controller.product;
 
+import java.util.UUID;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -9,7 +11,7 @@ import com.viescloud.llc.venzora.service.product.ProductVariantService;
 
 @RestController
 @RequestMapping("/api/v1/product/variants")
-public class ProductVariantController extends ViesAutoAdminCheckController<Long, ProductVariant, ProductVariantService> {
+public class ProductVariantController extends ViesAutoAdminCheckController<UUID, ProductVariant, ProductVariantService> {
 
     public ProductVariantController(ProductVariantService service) {
         super(service);

@@ -4,15 +4,18 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+
+import com.viescloud.eco.viesspringutils.interfaces.annotation.GeneratedUuidV7;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Transient;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -24,8 +27,8 @@ import lombok.NoArgsConstructor;
 public class Category implements Serializable {
     
     @Id
-    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedUuidV7
+    private UUID id;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String name;
@@ -34,7 +37,7 @@ public class Category implements Serializable {
     private String description;
 
     @Column
-    private Long parentCategoryId;
+    private UUID parentCategoryId;
 
     @ManyToMany
     @JoinTable(

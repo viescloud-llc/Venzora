@@ -1,11 +1,14 @@
 package com.viescloud.llc.venzora.model.product;
 
 import java.io.Serializable;
+import java.util.UUID;
+
+import com.viescloud.eco.viesspringutils.interfaces.annotation.GeneratedUuidV7;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,8 +20,8 @@ import lombok.NoArgsConstructor;
 public class Tag implements Serializable {
     
     @Id
-    @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedUuidV7
+    private UUID id;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String name;

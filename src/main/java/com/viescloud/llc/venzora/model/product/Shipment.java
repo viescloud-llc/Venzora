@@ -1,6 +1,9 @@
 package com.viescloud.llc.venzora.model.product;
 
+import java.util.UUID;
+
 import com.viescloud.eco.viesspringutils.config.jpa.DateTimeConverter;
+import com.viescloud.eco.viesspringutils.interfaces.annotation.GeneratedUuidV7;
 import com.viescloud.eco.viesspringutils.model.TrackedTimeStamp;
 import com.viescloud.eco.viesspringutils.util.DateTime;
 import com.viescloud.llc.venzora.model.product.type.ShipmentStatus;
@@ -12,11 +15,10 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -30,8 +32,8 @@ import lombok.NoArgsConstructor;
 public class Shipment extends TrackedTimeStamp {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedUuidV7
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
     @JoinColumn(name = "order_id", nullable = false)

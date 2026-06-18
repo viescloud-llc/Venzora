@@ -37,12 +37,12 @@ public class ReturnRequest extends TrackedTimeStampUserAccess {
     private String returnNumber;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
-    @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    @JoinColumn(name = "order_fulfillment_id", nullable = false)
+    private OrderFulfillment orderFulfillment;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
-    @JoinColumn(name = "order_item_id", nullable = false)
-    private OrderItem orderItem;
+    @JoinColumn(name = "order_fulfillment_item_id", nullable = false)
+    private OrderFulfillmentItem orderFulfillmentItem;
 
     @Column(nullable = false)
     private UUID userId;

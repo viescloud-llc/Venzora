@@ -8,7 +8,7 @@ import java.util.UUID;
 import com.viescloud.eco.viesspringutils.interfaces.annotation.GeneratedUuidV7;
 import com.viescloud.eco.viesspringutils.model.TrackedTimeStampUserAccess;
 import com.viescloud.llc.venzora.model.address.Address;
-import com.viescloud.llc.venzora.model.product.type.OrderStatus;
+import com.viescloud.llc.venzora.model.product.type.FulfillmentStatus;
 
 import jakarta.persistence.AttributeOverride;
 import jakarta.persistence.AttributeOverrides;
@@ -22,19 +22,22 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+/**
+ * The fulfillment-side record of a purchase. Bridges to the vies-spring-utils
+ * checkout module's {@code CheckoutOrder} (payment side) via {@link #checkoutOrderId}.
+ */
 @Data
 @EqualsAndHashCode(callSuper = false)
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-@Table(name = "orders")
-public class Order extends TrackedTimeStampUserAccess {
+@Table(name = "order_fulfillments")
+public class OrderFulfillment extends TrackedTimeStampUserAccess {
 
     @Id
     @GeneratedUuidV7
@@ -46,8 +49,17 @@ public class Order extends TrackedTimeStampUserAccess {
     @Column(nullable = false)
     private UUID userId;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    private List<OrderItem> items = new ArrayList<>();
+    /**
+     * Foreign-key-by-value to {@code CheckoutOrder.id} in the checkout module.
+     * Plain UUID column (not @ManyToOne) so the bridge does not require
+     * @EntityScan to span packages. Null until the checkout flow has created
+     * the matching CheckoutOrder.
+     */
+    @Column
+    private UUID checkoutOrderId;
+
+    @OneToMany(mappedBy = "orderFulfillment", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    private List<OrderFulfillmentItem> items = new ArrayList<>();
 
     @Column(nullable = false)
     private BigDecimal subtotal;
@@ -66,7 +78,7 @@ public class Order extends TrackedTimeStampUserAccess {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private OrderStatus status;
+    private FulfillmentStatus status;
 
     @Embedded
     @AttributeOverrides({

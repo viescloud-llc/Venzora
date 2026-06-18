@@ -36,8 +36,8 @@ public class Shipment extends TrackedTimeStamp {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
-    @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    @JoinColumn(name = "order_fulfillment_id", nullable = false)
+    private OrderFulfillment orderFulfillment;
 
     @Column(nullable = false, unique = true)
     private String trackingNumber;

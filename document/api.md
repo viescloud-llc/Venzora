@@ -178,10 +178,10 @@ All entity IDs are **UUIDv7** strings (sortable by time). Path variables expect 
 |---|---|---|---|
 | `CartController` | `/api/v1/carts` | [`Cart`](models.md#71-cart) | **User-scoped** |
 | `CartItemController` | `/api/v1/cart/items` | [`CartItem`](models.md#72-cartitem) | Admin |
-| `OrderController` | `/api/v1/orders` | [`Order`](models.md#73-order) | **User-scoped** |
-| `OrderItemController` | `/api/v1/order/items` | [`OrderItem`](models.md#74-orderitem) | Admin |
+| `OrderFulfillmentController` | `/api/v1/orders` | [`OrderFulfillment`](models.md#73-orderfulfillment) | **User-scoped** |
+| `OrderFulfillmentItemController` | `/api/v1/order/items` | [`OrderFulfillmentItem`](models.md#74-orderfulfillmentitem) | Admin |
 | `DiscountController` | `/api/v1/discounts` | [`Discount`](models.md#75-discount) | Admin |
-| `PaymentController` | `/api/v1/payments` | [`Payment`](models.md#76-payment) | Admin |
+| *(Payment removed)* | `/api/v1/checkout/orders/...` | `CheckoutOrder` / `CheckoutTransaction` | See checkout module |
 | `ShipmentController` | `/api/v1/shipments` | [`Shipment`](models.md#77-shipment) | Admin |
 | `ReturnRequestController` | `/api/v1/returns` | [`ReturnRequest`](models.md#78-returnrequest) | **User-scoped** |
 | `StockMovementController` | `/api/v1/stock/movements` | [`StockMovement`](models.md#79-stockmovement) | Admin |
@@ -277,19 +277,60 @@ Every controller below exposes the [seven standard endpoints from § 1.3](#13-th
 - Gate: admin.
 - Prefer managing items through the parent `Cart`. This endpoint exists for granular debugging; consumer UIs should not call it directly.
 
-#### 3.2.3 `OrderController` — `/api/v1/orders`
+#### 3.2.3 `OrderFulfillmentController` — `/api/v1/orders`
 
-- Entity: [`Order`](models.md#73-order). Service: `OrderService`.
+- Entity: [`OrderFulfillment`](models.md#73-orderfulfillment). Service: `OrderFulfillmentService`.
 - Gate: **user-scoped**. Shoppers see their own orders; admins (with their permission set) see assigned/shared rows.
 - `orderNumber` is unique — the server should generate it; if the UI sets it, it must be guaranteed unique.
 - `items`, `shippingAddress`, `billingAddress` are owned/embedded — send them in the create body.
+- `checkoutOrderId` links to the checkout module's `CheckoutOrder`. The orchestration sequence is: create `OrderFulfillment` (status `PENDING`) → call `POST /api/v1/checkout/orders/paypal` with the line items → store the returned `CheckoutOrder.id` on `OrderFulfillment.checkoutOrderId` → redirect the buyer to the `approveUrl` → on return, call `POST /api/v1/checkout/orders/paypal/{id}/capture`. Today the UI is responsible for this sequence; a server-side orchestrator is on the punch list (see [§ 5](#5-endpoints-intentionally-not-implemented-yet)).
 
-#### 3.2.4 `OrderItemController` — `/api/v1/order/items`
+#### 3.2.3a Checkout orchestrator — `/api/v1/orders/checkout` & `/api/v1/orders/{id}/complete`
 
-- Entity: [`OrderItem`](models.md#74-orderitem). Service: `OrderItemService`.
+Two custom endpoints that wrap the multi-entity checkout dance into single atomic calls. Controller: `CheckoutOrchestratorController`. Service: `CheckoutOrchestratorService`.
+
+**`POST /api/v1/orders/checkout`** — the one-shot start. Header `user_id` required.
+
+```jsonc
+// Request
+{
+  "cartId":          "0193de1a-b440-7c3c-ae0f-87a9a17a5edd",
+  "shippingAddress": { "street": "...", "city": "...", "type": "SHIPPING" },
+  "billingAddress":  { "street": "...", "city": "...", "type": "BILLING" },
+  "discountCode":    "SAVE10",          // optional
+  "provider":        "paypal",
+  "returnUrl":       "https://venzora.app/checkout/return",
+  "cancelUrl":       "https://venzora.app/checkout/cancel"
+}
+
+// 200 OK
+{
+  "orderFulfillment": { "id": "...", "checkoutOrderId": "...", "status": "PENDING", ... },
+  "approveUrl":       "https://www.paypal.com/checkoutnow?token=..."
+}
+```
+
+Inside one `@Transactional`: validates the cart belongs to the buyer, checks stock and discount, computes totals, creates the `OrderFulfillment`, calls the library to create a `CheckoutOrder`, links them via `checkoutOrderId`, bumps `Discount.currentUses`, marks the `Cart` inactive. If anything fails, everything rolls back.
+
+**`POST /api/v1/orders/{id}/complete`** — the post-redirect complete. Header `user_id` required. No body.
+
+Returns the updated `OrderFulfillment` (now `status: PROCESSING`). Inside one `@Transactional`: captures payment via `CheckoutOrderService.captureOrder(...)`, decrements stock on every variant, flips fulfillment status.
+
+**Error codes**:
+- `400` — validation failure (cart empty, mixed currencies, stock insufficient, discount invalid, missing fields).
+- `403` — cart/order not owned by the `user_id` header's UUID.
+- `404` — cart or order id not found.
+- `503` — `PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET` not configured (the checkout module is silent).
+
+**Coexistence with the CRUD controller**: `OrderFulfillmentController` still serves `GET /`, `GET /{id}`, `POST /`, etc. on the same `/api/v1/orders` base. Spring routes by full URL + verb, so these custom endpoints add cleanly without disabling CRUD.
+
+#### 3.2.4 `OrderFulfillmentItemController` — `/api/v1/order/items`
+
+- Entity: [`OrderFulfillmentItem`](models.md#74-orderfulfillmentitem). Service: `OrderFulfillmentItemService`.
 - Gate: admin.
 - `productSnapshot` is a JSON string — set it server-side at order-creation time so historical reads survive product edits.
-- Prefer managing items through the parent `Order`.
+- `lineItemSku` mirrors the SKU on the linked `CheckoutOrder.items[]`; used by returns to correlate.
+- Prefer managing items through the parent `OrderFulfillment`.
 
 #### 3.2.5 `DiscountController` — `/api/v1/discounts`
 
@@ -298,12 +339,17 @@ Every controller below exposes the [seven standard endpoints from § 1.3](#13-th
 - `code` is unique. The storefront checkout reads this controller (via admin token, today) to validate a code; future work should add a public validation endpoint.
 - `currentUses` is denormalized — increment server-side, never from the UI.
 
-#### 3.2.6 `PaymentController` — `/api/v1/payments`
+#### 3.2.6 *(Payment — removed)*
 
-- Entity: [`Payment`](models.md#76-payment). Service: `PaymentService`.
-- Gate: admin.
-- This is a CRUD over the `Payment` record — it does **not** charge a card. Real processor integration is out of scope until added.
-- `paymentStatus` is free-form text today; pick a convention server-side and document it before the UI codes against specific values.
+Venzora's `PaymentController` was deleted as part of the checkout-module integration. The payment lifecycle (authorize, capture, refund, audit log) now lives in the `vies-spring-utils` checkout module, mounted under `/api/v1/checkout/...`. Highlights:
+
+- `POST /api/v1/checkout/orders/paypal` — create a `CheckoutOrder` (returns the buyer-redirect `approveUrl`).
+- `POST /api/v1/checkout/orders/paypal/{id}/capture` — move funds after buyer approves.
+- `POST /api/v1/checkout/orders/paypal/{id}/refund?amount=&reason=` — full or partial refund.
+- `GET /api/v1/checkout/orders/{id}` — fetch payment-side status, transactions, refund total.
+- `POST /api/v1/checkout/webhooks/paypal` — PayPal-to-server event webhook (configure in the PayPal dashboard).
+
+The checkout module is conditional on `PAYPAL_CLIENT_ID` + `PAYPAL_CLIENT_SECRET`; without them the module is silent and the endpoints return 400. See the library's checkout reference for the full surface.
 
 #### 3.2.7 `ShipmentController` — `/api/v1/shipments`
 
@@ -424,10 +470,11 @@ These exist in the design but have **no controller** today. Track them as backen
 - **Public catalog read.** `ProductController` is admin-gated. Until a public read endpoint is added, the storefront cannot browse the catalog without an admin token.
 - **Variant generator.** `POST /api/v1/products/{id}/generate-variants` — accepts a cartesian-product spec and creates variants. Today the UI must loop and POST individually.
 - **Discount validation.** `POST /api/v1/discounts/validate` — accepts a `code` and a cart, returns the resolved discount or a reason it doesn't apply. Today the UI must replicate the validation rules client-side.
-- **Order placement.** Today `POST /api/v1/orders` is generic CRUD. A real checkout endpoint (`POST /api/v1/orders/checkout`) would atomically: validate cart, lock stock, apply discount, create order, create payment intent. This is the single most important commerce endpoint to add.
+- ~~**Server-side checkout orchestrator.**~~ **Shipped.** `POST /api/v1/orders/checkout` and `POST /api/v1/orders/{id}/complete` collapse the multi-call checkout flow into two atomic transactions. See [§ 3.2.3a](#323a-checkout-orchestrator--apiv1orderscheckout--apiv1ordersidcomplete) below.
+- **Webhook → fulfillment listener.** When a `CheckoutOrder` transitions to `CAPTURED` / `REFUNDED`, the matching `OrderFulfillment.status` should auto-update (`PENDING` → `PROCESSING` on capture; `REFUNDED` / `PARTIALLY_REFUNDED` on refund). Today this requires a custom subclass or wrapper around `PaypalCheckoutOrderService` that looks up the `OrderFulfillment` by `checkoutOrderId` after each transition.
 - **Public review write.** See [§ 3.3.1](#331-reviewcontroller--apiv1reviews).
 - **User self-service.** `UserInfo` and `UserAddress` are admin-gated; shoppers cannot edit their own profile/addresses today.
-- **Payment processor integration.** `PaymentController` is CRUD over a row, not a card-charging endpoint.
+- **Card / cash flows.** The checkout module ships with PayPal only. CARD and CASH payment methods are not implemented; the old `Payment.paymentMethod` enum is gone. Adding non-PayPal flows means either a new provider implementation against `AbstractCheckoutOrderService`, or a separate Venzora-side `ManualPayment` entity for in-person flows.
 - **Search.** No full-text product search endpoint. Use `POST /matches` with `propertyMatcher=CONTAINS` as a stopgap.
 - **Media upload.** `ProductMedia.url` is opaque; no upload endpoint exists. Bring your own uploader.
 

@@ -13,7 +13,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -24,15 +23,15 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class OrderItem extends TrackedTimeStamp {
+public class OrderFulfillmentItem extends TrackedTimeStamp {
 
     @Id
     @GeneratedUuidV7
     private UUID id;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
-    @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+    @JoinColumn(name = "order_fulfillment_id", nullable = false)
+    private OrderFulfillment orderFulfillment;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
     @JoinColumn(name = "product_variant_id", nullable = false)
@@ -47,6 +46,13 @@ public class OrderItem extends TrackedTimeStamp {
     @Column(nullable = false)
     private BigDecimal totalPrice;
 
+    /**
+     * Mirrors {@code CheckoutLineItem.sku} on the linked CheckoutOrder. Used to
+     * correlate a returned line to the original checkout line item.
+     */
+    @Column
+    private String lineItemSku;
+
     @Column(columnDefinition = "TEXT")
-    private String productSnapshot; // JSON snapshot of product details at time of order
+    private String productSnapshot;
 }

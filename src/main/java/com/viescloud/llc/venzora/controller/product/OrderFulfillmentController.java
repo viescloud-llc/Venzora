@@ -6,14 +6,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.viescloud.eco.viesspringutils.controller.ViesControllerWithUserAccess;
-import com.viescloud.llc.venzora.model.product.Order;
-import com.viescloud.llc.venzora.service.product.OrderService;
+import com.viescloud.llc.venzora.model.product.OrderFulfillment;
+import com.viescloud.llc.venzora.service.product.OrderFulfillmentService;
 
 @RestController
 @RequestMapping("/api/v1/orders")
-public class OrderController extends ViesControllerWithUserAccess<UUID, Order, OrderService> {
+public class OrderFulfillmentController extends ViesControllerWithUserAccess<UUID, OrderFulfillment, OrderFulfillmentService> {
 
-    public OrderController(OrderService service) {
+    public OrderFulfillmentController(OrderFulfillmentService service) {
         super(service);
     }
 

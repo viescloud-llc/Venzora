@@ -6,14 +6,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.viescloud.eco.viesspringutils.auto.controller.ViesAutoAdminCheckController;
-import com.viescloud.llc.venzora.model.product.OrderItem;
-import com.viescloud.llc.venzora.service.product.OrderItemService;
+import com.viescloud.llc.venzora.model.product.OrderFulfillmentItem;
+import com.viescloud.llc.venzora.service.product.OrderFulfillmentItemService;
 
 @RestController
 @RequestMapping("/api/v1/order/items")
-public class OrderItemController extends ViesAutoAdminCheckController<UUID, OrderItem, OrderItemService> {
+public class OrderFulfillmentItemController extends ViesAutoAdminCheckController<UUID, OrderFulfillmentItem, OrderFulfillmentItemService> {
 
-    public OrderItemController(OrderItemService service) {
+    public OrderFulfillmentItemController(OrderFulfillmentItemService service) {
         super(service);
     }
 

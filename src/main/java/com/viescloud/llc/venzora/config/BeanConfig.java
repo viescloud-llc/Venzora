@@ -26,6 +26,10 @@ public class BeanConfig {
     public ViesApplicationConfig viesApplicationConfig(@Value("${spring.profiles.active:local}") String env) {
         var config = new ViesApplicationConfig(env, ViesDefaultEndpointEnum.toList());
         config.setEnabledHttpClientController(true);
+        config.setEnabledCheckoutOrderController(true);
+        config.setEnabledCheckoutWebhookController(true);
+        config.setEnabledCheckoutSubscriptionController(false);
+        config.setEnabledCheckoutPlanController(false);
         return config;
     }
 }

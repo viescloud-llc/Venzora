@@ -268,7 +268,7 @@ Each feature is a self-contained set of standalone components + a service for HT
 ## 10. Practical gotchas (read once)
 
 1. **No public catalog endpoint exists yet.** The storefront cannot browse the catalog until the backend either lifts the admin gate from `ProductController` or adds a parallel public read API. This is the single biggest blocker for v1 storefront work — call it out in the kickoff.
-2. **The CRUD-only endpoints are not enough on their own.** Every entity is reachable over HTTP, but workflows that span multiple entities (checkout, return processing, discount validation, variant generation) still need purpose-built endpoints. See [§ 11](#11-open-questions--backend-gaps) and [`api.md` § 5](api.md#5-endpoints-intentionally-not-implemented-yet).
+2. **Most workflows live behind CRUD.** Every entity is reachable over HTTP, and the most important multi-entity workflow — checkout — now has dedicated `/api/v1/orders/checkout` and `/api/v1/orders/{id}/complete` endpoints (see [`checkout.md` § 6](checkout.md#6-the-one-shot-checkout-endpoint-shipped)). Other multi-entity flows (return processing, discount validation, variant generation) still need purpose-built endpoints — see [§ 11](#11-open-questions--backend-gaps).
 3. **Cascade deletes are real.** Show dependent counts in destructive confirmations.
 4. **EAGER everywhere.** Responses are heavy. Consider asking for thin DTOs as soon as a list view feels slow.
 5. **The polymorphic `AttributeValue` is the most failure-prone piece.** Centralize it (see § 7.4). Do not reimplement the slot logic per screen.

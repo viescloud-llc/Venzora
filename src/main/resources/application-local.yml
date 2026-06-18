@@ -38,6 +38,14 @@ management:
       exposure:
         include: "*"
 
+# checkout
+paypal:
+  clientId: ${PAYPAL_CLIENT_ID:}
+  clientSecret: ${PAYPAL_CLIENT_SECRET:}
+  sandbox: ${PAYPAL_SANDBOX:true}
+  webhookId: ${PAYPAL_WEBHOOK_ID:}
+  restApiBaseUrl: ${PAYPAL_REST_API_BASE_URL:}
+
 # -----------------------------------H2 specific configuration-----------------------------------
 
 H2_DB: './h2'
@@ -57,5 +65,13 @@ MYSQL_USE_SSL: 'false'
 REDIS_ENABLED: false
 REDIS_HOST: "localhost"
 REDIS_PORT: 6379
-REDIS_USERNAME: 
-REDIS_PASSWORD: 
+REDIS_USERNAME:
+REDIS_PASSWORD:
+
+# -----------------------------------Paypal checkout configuration-----------------------------------
+# PAYPAL_CLIENT_ID: 
+# PAYPAL_CLIENT_SECRET:
+# PAYPAL_SANDBOX: true
+# PAYPAL_WEBHOOK_ID:
+# (usually this blank)
+# PAYPAL_REST_API_BASE_URL:

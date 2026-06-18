@@ -31,7 +31,7 @@
 
 ### 1.3 Auth & access control fields
 
-Entities that extend `TrackedTimeStampUserAccess` (Cart, Order, ReturnRequest, WishProduct) include the [`UserAccess` envelope](#33-useraccess-permissions-envelope) (`inputUserId`, `ownerUserId`, `sharedUsers`, `sharedGroups`, `sharedOthers`). These are server-managed — the UI generally reads them, never sets them, unless you are explicitly building a sharing dialog.
+Entities that extend `TrackedTimeStampUserAccess` (Cart, OrderFulfillment, ReturnRequest, WishProduct) include the [`UserAccess` envelope](#33-useraccess-permissions-envelope) (`inputUserId`, `ownerUserId`, `sharedUsers`, `sharedGroups`, `sharedOthers`). These are server-managed — the UI generally reads them, never sets them, unless you are explicitly building a sharing dialog.
 
 ---
 
@@ -49,7 +49,7 @@ Every controller extends `ViesAutoAdminCheckController` and exposes the standard
 | `AttributeOption`       | `/api/v1/product/attribute/options`            | Admin                              |
 | `WishProduct`           | `/api/v1/wishlists`                            | User-scoped                        |
 
-Entities with **no controller yet** (cannot be reached over HTTP today): `Category`, `Tag`, `Cart`, `CartItem`, `Order`, `OrderItem`, `Payment`, `Shipment`, `ReturnRequest`, `Discount`, `Review`, `StockMovement`, `ProductMedia`, `UserInfo`, `UserAddress`. Coordinate with the backend before depending on these in the UI.
+Every entity now has a CRUD controller — see [`api.md`](api.md) for the full URL surface. Payment is no longer a Venzora entity; it lives in the checkout module as `CheckoutTransaction` (queried via `GET /api/v1/checkout/...`).
 
 ---
 
@@ -161,7 +161,7 @@ export type AddressType = 'BILLING' | 'SHIPPING';
 
 Used by:
 - `UserAddress.addresses` — a `Set<Address>`.
-- `Order.shippingAddress` and `Order.billingAddress` — column-prefixed with `shipping_` / `billing_` server-side.
+- `OrderFulfillment.shippingAddress` and `OrderFulfillment.billingAddress` — column-prefixed with `shipping_` / `billing_` server-side.
 
 ### 4.2 `AttributeValue` *(polymorphic — read carefully)*
 
@@ -379,7 +379,9 @@ See [§ 4.2](#42-attributevalue-polymorphic--read-carefully) for the full slot t
 
 ## 7. Commerce
 
-These models exist in the schema but **most have no controller yet** — confirm before wiring UI.
+> **Architecture note — the checkout split.** Venzora no longer owns the payment-side of a purchase. The `vies-spring-utils` checkout module (6.2.8) ships a `CheckoutOrder` / `CheckoutTransaction` pair that handles the payment lifecycle (PayPal today). Venzora retains the **fulfillment side** of a purchase — shipping/billing address, fulfillment status, line items with FK to `ProductVariant`, totals — as `OrderFulfillment` / `OrderFulfillmentItem`. The two are linked by `OrderFulfillment.checkoutOrderId` (a plain UUID column). The old `Order`, `OrderItem`, and `Payment` entities are gone.
+>
+> See [`checkout.md`](checkout.md) for the worked end-to-end flow (Alice's purchase, refunds, the one-shot endpoint, the webhook listener).
 
 ### 7.1 `Cart`
 
@@ -409,41 +411,46 @@ export interface CartItem extends TrackedTimeStamp {
 }
 ```
 
-### 7.3 `Order`
+### 7.3 `OrderFulfillment`
 
-Extends `TrackedTimeStampUserAccess`. Table is named `orders` (SQL reserved word). Both addresses are embedded as Address with `shipping_*` / `billing_*` column prefixes server-side, but in JSON they appear as plain nested objects.
+Extends `TrackedTimeStampUserAccess`. The Venzora-side record of a purchase: shipping/billing addresses, fulfillment status, totals, line items. Bridges to a `CheckoutOrder` (library) via `checkoutOrderId`. Table name: `order_fulfillments`.
 
 ```ts
-export interface Order extends TrackedTimeStampUserAccess {
+export interface OrderFulfillment extends TrackedTimeStampUserAccess {
   id?: string;
-  orderNumber: string;             // unique, human-facing
-  userId: string;                  // UUID
-  items: OrderItem[];              // owned, orphanRemoval
-  subtotal: string;
+  orderNumber: string;             // unique, human-facing (e.g. 'VEN-2026-0001')
+  userId: string;                  // UUID of the buyer
+  checkoutOrderId?: string;        // UUID → CheckoutOrder.id; null until checkout completes
+  items: OrderFulfillmentItem[];   // owned, orphanRemoval
+  subtotal: string;                // BigDecimal
   tax: string;
   shippingCost: string;
   discountAmount: string;          // default '0'
   totalAmount: string;
-  status: OrderStatus;
+  status: FulfillmentStatus;       // see § 9 — no PAYMENT_* states; payment lives on CheckoutOrder
   shippingAddress: Address;
   billingAddress: Address;
   notes?: string;
 }
 ```
 
-### 7.4 `OrderItem`
+- `checkoutOrderId` is a plain UUID column (not a JPA `@ManyToOne`) — the bridge to the checkout module stays loose so cross-package entity scanning isn't required.
+- Resolve `checkoutOrderId` against the checkout module's `GET /api/v1/checkout/orders/{id}` to get payment status, `approveUrl`, amounts, refund total, etc.
 
-Extends `TrackedTimeStamp`. Each line item carries a JSON `productSnapshot` so that historical orders survive product edits/deletions.
+### 7.4 `OrderFulfillmentItem`
+
+Extends `TrackedTimeStamp`. Line item on an `OrderFulfillment`. Preserves the FK to `ProductVariant` so inventory and returns can target a specific SKU.
 
 ```ts
-export interface OrderItem extends TrackedTimeStamp {
+export interface OrderFulfillmentItem extends TrackedTimeStamp {
   id?: string;
-  order?: Order;
-  productVariant: ProductVariant;
-  quantity: number;                // Integer
-  unitPrice: string;
+  orderFulfillment?: OrderFulfillment;
+  productVariant: ProductVariant;   // required FK — preserved for inventory & returns
+  quantity: number;                 // Integer
+  unitPrice: string;                // BigDecimal
   totalPrice: string;
-  productSnapshot?: string;        // JSON string — parse with JSON.parse if you need it
+  lineItemSku?: string;             // mirrors CheckoutLineItem.sku on the linked CheckoutOrder
+  productSnapshot?: string;         // JSON string — parse with JSON.parse if you need it
 }
 ```
 
@@ -468,28 +475,18 @@ export interface Discount extends TrackedTimeStamp {
 }
 ```
 
-### 7.6 `Payment`
+### 7.6 *(Payment — removed)*
 
-Extends `TrackedTimeStamp`. Records a payment transaction against an order.
-
-```ts
-export interface Payment extends TrackedTimeStamp {
-  id?: string;
-  orderId: string;                 // UUID of Order — note this is a plain column, not a FK relationship in JSON
-  paymentMethod?: PaymentMethodType;
-  paymentStatus: string;           // free-form text today; treat as opaque
-  amount: string;                  // BigDecimal
-}
-```
+Venzora's `Payment` entity has been deleted. Payment records now live in the checkout module as `CheckoutTransaction` (kinds: `AUTHORIZE | CAPTURE | REFUND | VOID | RENEWAL_CHARGE | CHARGEBACK | DISPUTE`). Query via `CheckoutTransactionDao` server-side, or hit the checkout REST endpoints (see [library docs](#checkout)) from the frontend.
 
 ### 7.7 `Shipment`
 
-Extends `TrackedTimeStamp`.
+Extends `TrackedTimeStamp`. Now references `OrderFulfillment` (renamed from `order`).
 
 ```ts
 export interface Shipment extends TrackedTimeStamp {
   id?: string;
-  order: Order;                          // required FK
+  orderFulfillment: OrderFulfillment;    // required FK
   trackingNumber: string;                // unique
   carrier: string;                       // 'UPS' | 'FedEx' | etc — free text
   status: ShipmentStatus;
@@ -502,22 +499,22 @@ export interface Shipment extends TrackedTimeStamp {
 
 ### 7.8 `ReturnRequest`
 
-Extends `TrackedTimeStampUserAccess`. RMA workflow.
+Extends `TrackedTimeStampUserAccess`. RMA workflow. Now points at `OrderFulfillment` / `OrderFulfillmentItem`.
 
 ```ts
 export interface ReturnRequest extends TrackedTimeStampUserAccess {
   id?: string;
-  returnNumber: string;            // unique, human-facing
-  order: Order;                    // required FK
-  orderItem: OrderItem;            // required FK — which line item is being returned
-  userId: string;                  // UUID
+  returnNumber: string;                       // unique, human-facing
+  orderFulfillment: OrderFulfillment;         // required FK
+  orderFulfillmentItem: OrderFulfillmentItem; // required FK — which line item is being returned
+  userId: string;                             // UUID
   status: ReturnStatus;
   reason: string;
   adminNotes?: string;
-  returnQuantity: number;          // Integer
-  refundAmount: string;            // BigDecimal
+  returnQuantity: number;                     // Integer
+  refundAmount: string;                       // BigDecimal — informational; the real refund moves through CheckoutOrder.refundOrder
   trackingNumber?: string;
-  refundShipping: boolean;         // default false
+  refundShipping: boolean;                    // default false
 }
 ```
 
@@ -615,14 +612,15 @@ All enums serialize as their `name()` string (e.g. `'ACTIVE'`). Define them as T
 ### 9.4 `ProductMediaType`
 `'IMAGE' | 'VIDEO'`
 
-### 9.5 `OrderStatus`
-`'PENDING' | 'PAYMENT_PENDING' | 'PAYMENT_CONFIRMED' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'REFUNDED' | 'FAILED'`
+### 9.5 `FulfillmentStatus`
 
-### 9.6 `PaymentMethodType`
+Replaces the old `OrderStatus`. Payment-side states (`PAYMENT_PENDING`, `PAYMENT_CONFIRMED`) are gone — those live on `CheckoutOrder.status` in the checkout module.
 
-> Java class name is `PaymentMethodtype` (lowercase `t`); the wire name is unchanged.
+`'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED' | 'RETURNED' | 'REFUNDED' | 'PARTIALLY_REFUNDED' | 'FAILED'`
 
-`'CARD' | 'CASH' | 'PAYPAL'`
+### 9.6 *(PaymentMethodType — removed)*
+
+Venzora's enum is gone. The active payment method lives on the checkout module's `CheckoutOrder` (provider = `"paypal"`).
 
 ### 9.7 `DiscountType`
 `'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_SHIPPING' | 'BUY_X_GET_Y'`
@@ -664,8 +662,10 @@ src/app/models/
   attribute.ts        // AttributeDefinition, AttributeOption, AttributeValue,
                       //   ProductAttribute, ProductVariantAttribute
   product.ts          // Product, ProductVariant, ProductMedia, Category, Tag
-  commerce.ts         // Cart, CartItem, Order, OrderItem, Payment, Shipment,
-                      //   Discount, ReturnRequest, StockMovement
+  commerce.ts         // Cart, CartItem, OrderFulfillment, OrderFulfillmentItem,
+                      //   Discount, Shipment, ReturnRequest, StockMovement
+  checkout.ts         // CheckoutOrder, CheckoutLineItem, CheckoutTransaction
+                      //   (from the vies-spring-utils checkout module)
   user.ts             // UserInfo, UserAddress, WishProduct, Review
 ```
 
@@ -675,10 +675,10 @@ Each module should re-export from a single `index.ts` so consumers can `import {
 
 ## 11. Practical gotchas
 
-1. **Bidirectional EAGER relationships can create JSON cycles.** Today, only `AttributeOption.attributeDefinition` is marked `@JsonIgnore`. Other back-refs (`ProductVariant.product`, `CartItem.cart`, `OrderItem.order`, `Shipment.order`) are serialized. If you receive a payload that looks unexpectedly deep or repeats objects, flag it to the backend — the fix may be `@JsonManagedReference`/`@JsonBackReference`.
+1. **Bidirectional EAGER relationships can create JSON cycles.** Today, only `AttributeOption.attributeDefinition` is marked `@JsonIgnore`. Other back-refs (`ProductVariant.product`, `CartItem.cart`, `OrderFulfillmentItem.orderFulfillment`, `Shipment.orderFulfillment`) are serialized. If you receive a payload that looks unexpectedly deep or repeats objects, flag it to the backend — the fix may be `@JsonManagedReference`/`@JsonBackReference`.
 2. **`BigDecimal` precision.** Spring/Jackson defaults to emitting BigDecimal as a JSON number; we treat it as `string` here to be safe across JS floats. Confirm the wire format with one round-trip before committing your TS type — switch to `number` only if you measure consistent precision.
 3. **`DateTime` is not ISO 8601.** It is a structured object. Build the conversion utility once; do not write ad-hoc parsers everywhere.
 4. **UUIDv7 is sortable.** You can sort lists by `id` and get rough creation order for free, which is sometimes faster than reading `createdAt`.
-5. **`productSnapshot` on `OrderItem` is a JSON string**, not a nested object. `JSON.parse` it if you need the historical product data.
+5. **`productSnapshot` on `OrderFulfillmentItem` is a JSON string**, not a nested object. `JSON.parse` it if you need the historical product data.
 6. **Categories form a tree by convention only.** `parentCategoryId` is a plain column with no FK constraint. Validate orphan/cycle prevention client-side until the backend adds it.
 7. **No DTOs today.** Requests and responses use the entity types directly. This means every relationship is included in the payload. As payloads grow, ask the backend to introduce request/response DTOs.

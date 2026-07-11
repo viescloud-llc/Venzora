@@ -24,6 +24,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -80,4 +82,59 @@ public class Product extends TrackedTimeStamp {
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<ProductMedia> medias = new HashSet<>();
+
+    /**
+     * Set the back-reference on every owned child (and every grandchild reached
+     * through a variant) before Hibernate cascades the write.
+     *
+     * <p><b>Why recursive.</b> {@code ProductVariant.medias} and
+     * {@code ProductVariant.attributeValues} are {@code mappedBy} — i.e. inverse
+     * collections. Adding an item to an inverse collection <em>does not</em>
+     * make the owning entity (the variant) dirty, so Hibernate won't schedule
+     * an {@code UPDATE} on the variant and {@link ProductVariant#syncChildBackRefs}
+     * won't fire. We therefore cannot rely on the variant's own callback here
+     * — the walk has to be done from the parent whose write is definitely
+     * happening: {@code Product}.
+     *
+     * <p><b>Ordering.</b> Variants are walked <em>after</em> product-level
+     * medias. If (by client error) the same media instance appears in both
+     * {@code product.medias} and {@code variant.medias}, the variant-level
+     * assignment wins — variant scope is the more specific ownership.
+     */
+    @PrePersist
+    @PreUpdate
+    private void syncChildBackRefs() {
+        if (attributes != null) {
+            for (ProductAttribute a : attributes) {
+                if (a != null) a.setProduct(this);
+            }
+        }
+        if (medias != null) {
+            for (ProductMedia m : medias) {
+                if (m == null) continue;
+                m.setProduct(this);
+                m.setProductVariant(null);
+            }
+            ProductMedia.normalizePrimary(medias);
+        }
+        if (variants != null) {
+            for (ProductVariant v : variants) {
+                if (v == null) continue;
+                v.setProduct(this);
+                if (v.getMedias() != null) {
+                    for (ProductMedia m : v.getMedias()) {
+                        if (m == null) continue;
+                        m.setProductVariant(v);
+                        m.setProduct(null);
+                    }
+                    ProductMedia.normalizePrimary(v.getMedias());
+                }
+                if (v.getAttributeValues() != null) {
+                    for (ProductVariantAttribute a : v.getAttributeValues()) {
+                        if (a != null) a.setVariant(v);
+                    }
+                }
+            }
+        }
+    }
 }

@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.viescloud.eco.viesspringutils.interfaces.annotation.GeneratedUuidV7;
 
 import jakarta.persistence.CascadeType;
@@ -18,7 +19,9 @@ import jakarta.persistence.ManyToOne;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
 @AllArgsConstructor
@@ -32,6 +35,9 @@ public class ProductVariantAttribute implements Serializable {
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
     @JoinColumn(name = "variant_id")
     @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonIgnore
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     private ProductVariant variant;
     
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})

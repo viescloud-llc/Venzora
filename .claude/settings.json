@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(awk '/protected T saveAndExpire/{p=1} p{print} /^  [a-z]/{if\\(p>3\\)exit} p{p++}')",
+      "Bash(awk '/protected T addJpaJoinColumnSelfReference/{p=1} p{print} /^  [a-z]/{if\\(p>3\\)exit} p{p++}')",
+      "Bash(awk '/lambda.addJpaJoinColumnSelfReference/{p=1} p{print} /^  [a-z]/{if\\(p>3\\)exit} p{p++}')",
+      "Bash(grep -n \"5.2 \\\\`ProductVariant\\\\`\" /config/gitea/Venzora/document/api.md)"
+    ]
+  }
+}

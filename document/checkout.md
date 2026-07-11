@@ -1,6 +1,6 @@
 # Venzora — Checkout Flow
 
-> A plain-English walkthrough of how a purchase moves through Venzora and the `vies-spring-utils` checkout module. Read this once and the moving parts should snap into place. For entity shapes, see [`models.md`](models.md). For endpoint URLs, see [`api.md`](api.md).
+> A plain-English walkthrough of how a purchase moves through Venzora and the `vies-spring-utils` checkout module. Read this once and the moving parts should snap into place. For entity shapes and endpoints, see [`api.md`](api.md). For frontend intent, see [`frontend-client.md`](frontend-client.md) (storefront) or [`frontend-manager.md`](frontend-manager.md) (back-office).
 
 ---
 
@@ -224,10 +224,14 @@ If any step throws, Spring rolls back the whole transaction. No orphaned rows.
 ### Caveats
 
 - **The PayPal side is not rolled back if our DB write fails after.** If `createOrder` succeeds at PayPal but the subsequent `OrderFulfillment` insert fails, the PayPal order lingers as an orphan. Bounded but real. A future refinement could call `cancelOrder` (when the library exposes it) in the `@Transactional` rollback hook.
-- **Tax and shipping are zero** — placeholders until tax/shipping engines are wired.
-- **Stock checks are not locking.** Two simultaneous buyers can both pass the pre-check; the `complete()` step's negative-stock guard catches the loser. For high-contention SKUs, add a real DB lock or a reservation entity.
+- **Tax uses self-hostable `TaxRule` entries** — admins define `{ country, state, city, postalCode, rate }` rules; the orchestrator picks the most specific match for the shipping address via `TaxCalculator`. No rule → zero tax. Import/export endpoints let admins ship a rule set as JSON. See [`api.md` § 7.11](api.md#711-taxrule).
+- **Shipping uses `ShippingRule` per currency** — flat fee with optional free-above threshold. Missing or inactive rule for a currency means free shipping with a warning log.
+- **Stock checks are not locking.** Two simultaneous buyers can both pass the pre-check; the `complete()` step's negative-stock guard catches the loser. For high-contention SKUs, add `@Version` to `ProductVariant` (clean) or a reservation entity (heavier).
 - **Provider is taken from the request body.** Today only `"paypal"` is registered; passing anything else returns 503 via the library's registry lookup.
-- **`validFrom` / `validTo` discount window checks** are not yet enforced — deferred until DateTime comparison helpers land.
+
+### Discount validation preview
+
+The frontend's "Apply code" UX should call **`POST /api/v1/discounts/validate`** (not `/orders/checkout`) to test a code without committing. Returns `{ valid, discountAmount, reason }` at HTTP 200 — business rejections come back in the body, not as exceptions. See [`api.md` § 3.2.5a](api.md#325a-discount-validation--post-apiv1discountsvalidate).
 
 ---
 

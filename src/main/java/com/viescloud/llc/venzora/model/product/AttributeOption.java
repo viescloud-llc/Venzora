@@ -16,7 +16,9 @@ import jakarta.persistence.ManyToOne;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Data
@@ -40,5 +42,7 @@ public class AttributeOption implements Serializable {
     @JsonIgnore
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
     @JoinColumn(name = "attribute_definition_id")
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     private AttributeDefinition attributeDefinition;
 }

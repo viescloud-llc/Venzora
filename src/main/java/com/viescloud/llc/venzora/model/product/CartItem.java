@@ -3,6 +3,7 @@ package com.viescloud.llc.venzora.model.product;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.viescloud.eco.viesspringutils.interfaces.annotation.GeneratedUuidV7;
 import com.viescloud.eco.viesspringutils.model.TrackedTimeStamp;
 
@@ -18,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -32,6 +34,9 @@ public class CartItem extends TrackedTimeStamp {
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})
     @JoinColumn(name = "cart_id", nullable = false)
+    @JsonIgnore
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
     private Cart cart;
 
     @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.REFRESH, CascadeType.DETACH})

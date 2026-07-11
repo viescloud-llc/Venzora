@@ -14,6 +14,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -42,4 +44,19 @@ public class Cart extends TrackedTimeStampUserAccess {
 
     @Column(nullable = false)
     private Boolean active = true;
+
+    /**
+     * Set the back-reference on every owned child before Hibernate cascades the
+     * write. Same rationale as {@link Product#syncChildBackRefs()} — child-side
+     * {@code @JsonIgnore} back-references mean incoming JSON never carries them.
+     */
+    @PrePersist
+    @PreUpdate
+    private void syncChildBackRefs() {
+        if (items != null) {
+            for (CartItem i : items) {
+                if (i != null) i.setCart(this);
+            }
+        }
+    }
 }

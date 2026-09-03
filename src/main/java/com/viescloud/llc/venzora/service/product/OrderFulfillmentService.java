@@ -41,6 +41,16 @@ public class OrderFulfillmentService extends VenzoraCustomUserAccessService<UUID
     }
 
     /**
+     * The bypass (and the write gate below) keys on {@code orders:manage}, so
+     * section admins — shipping, finance — get the full order queue on exactly
+     * their grant, not blanket ADMIN membership. SUPER_ADMIN passes via *.
+     */
+    @Override
+    protected String adminBypassAuthority() {
+        return "orders:manage";
+    }
+
+    /**
      * Orders are FINANCIAL RECORDS: buyers read their own (row-level access),
      * but every mutation through the HTTP API is admin-only — a buyer must not
      * be able to rewrite their order's status, totals, or metadata even though
@@ -62,7 +72,7 @@ public class OrderFulfillmentService extends VenzoraCustomUserAccessService<UUID
     private void requireAdminWriter(OrderFulfillment input) {
         if (!isAdminBypassUser(input.getInputUserId())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "Orders can only be modified by an admin");
+                    "Orders can only be modified by back-office staff (orders:manage)");
         }
     }
 

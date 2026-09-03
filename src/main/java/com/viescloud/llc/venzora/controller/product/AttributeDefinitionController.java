@@ -21,5 +21,11 @@ public class AttributeDefinitionController extends ViesAutoAdminCheckController<
     protected boolean isEnabled() {
         return true;
     }
+
+    /** Authority-based gating (permission-system.md): the seven verbs check schema:read/create/update/delete. */
+    @Override
+    protected String resourceName() {
+        return "schema";
+    }
     
 }

@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.viescloud.eco.viesspringutils.interfaces.annotation.RequiresAuthority;
+
 import com.viescloud.llc.venzora.model.report.CustomersReport;
 import com.viescloud.llc.venzora.model.report.GeographyReport;
 import com.viescloud.llc.venzora.model.report.OrderStatusReport;
@@ -25,6 +27,7 @@ import com.viescloud.llc.venzora.service.report.ReportService;
  * the framework. In production, gate the entire {@code /reports} path at the reverse
  * proxy or place explicit permission checks here.
  */
+@RequiresAuthority("reports:read")
 @RestController
 @RequestMapping("/api/v1/reports")
 public class ReportController {

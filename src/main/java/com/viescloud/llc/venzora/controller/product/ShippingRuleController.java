@@ -22,4 +22,10 @@ public class ShippingRuleController extends ViesAutoAdminCheckController<UUID, S
         return true;
     }
 
+    /** Authority-based gating (permission-system.md): the seven verbs check rules:read/create/update/delete. */
+    @Override
+    protected String resourceName() {
+        return "rules";
+    }
+
 }

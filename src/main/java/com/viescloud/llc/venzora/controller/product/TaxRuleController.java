@@ -22,4 +22,10 @@ public class TaxRuleController extends ViesAutoAdminCheckController<UUID, TaxRul
         return true;
     }
 
+    /** Authority-based gating (permission-system.md): the seven verbs check rules:read/create/update/delete. */
+    @Override
+    protected String resourceName() {
+        return "rules";
+    }
+
 }

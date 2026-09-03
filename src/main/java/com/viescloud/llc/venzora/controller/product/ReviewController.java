@@ -22,4 +22,10 @@ public class ReviewController extends ViesAutoAdminCheckController<UUID, Review,
         return true;
     }
 
+    /** Authority-based gating (permission-system.md): the seven verbs check reviews:read/create/update/delete. */
+    @Override
+    protected String resourceName() {
+        return "reviews";
+    }
+
 }

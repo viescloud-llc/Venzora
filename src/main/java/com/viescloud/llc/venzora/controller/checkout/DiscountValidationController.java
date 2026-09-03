@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.viescloud.eco.viesspringutils.interfaces.annotation.RequiresUser;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.viescloud.llc.venzora.model.checkout.DiscountValidationRequest;
@@ -18,6 +20,7 @@ import com.viescloud.llc.venzora.service.checkout.CheckoutOrchestratorService;
  * Non-destructive coupon preview. Coexists with the admin-gated CRUD
  * {@code DiscountController} at the same base path; routes by full URL + verb.
  */
+@RequiresUser
 @RestController
 @RequestMapping("/api/v1/discounts")
 public class DiscountValidationController {

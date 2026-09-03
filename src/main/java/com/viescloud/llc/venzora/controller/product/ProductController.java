@@ -21,5 +21,11 @@ public class ProductController extends ViesAutoAdminCheckController<UUID, Produc
     protected boolean isEnabled() {
         return true;
     }
+
+    /** Authority-based gating (permission-system.md): the seven verbs check catalog:read/create/update/delete. */
+    @Override
+    protected String resourceName() {
+        return "catalog";
+    }
     
 }

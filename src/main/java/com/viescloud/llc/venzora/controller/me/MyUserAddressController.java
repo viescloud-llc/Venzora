@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.viescloud.eco.viesspringutils.interfaces.annotation.RequiresUser;
+
 import com.viescloud.llc.venzora.dao.authentication.UserAddressDao;
 import com.viescloud.llc.venzora.model.authentication.UserAddress;
 import com.viescloud.llc.venzora.util.UserIdHeader;
@@ -19,6 +21,7 @@ import com.viescloud.llc.venzora.util.UserIdHeader;
  * {@code Set<Address>} per user. To add or remove an entry, the frontend PUTs the
  * whole row with the updated set.
  */
+@RequiresUser
 @RestController
 @RequestMapping("/api/v1/me/addresses")
 public class MyUserAddressController {

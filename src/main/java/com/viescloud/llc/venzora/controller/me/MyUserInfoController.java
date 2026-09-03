@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.viescloud.eco.viesspringutils.interfaces.annotation.RequiresUser;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.viescloud.llc.venzora.dao.authentication.UserInfoDao;
@@ -20,6 +22,7 @@ import com.viescloud.llc.venzora.util.UserIdHeader;
  * Self-service profile endpoints. {@link UserInfo} keys on {@code userId} (the
  * buyer's UUID), so there is exactly one row per user; PUT acts as upsert.
  */
+@RequiresUser
 @RestController
 @RequestMapping("/api/v1/me/info")
 public class MyUserInfoController {

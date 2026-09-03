@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.viescloud.eco.viesspringutils.interfaces.annotation.PublicEndpoint;
+
 import com.viescloud.eco.viesspringutils.model.PageResponse;
 import com.viescloud.llc.venzora.model.product.FilterMap;
 import com.viescloud.llc.venzora.model.product.Product;
@@ -38,6 +40,7 @@ import com.viescloud.llc.venzora.service.product.PublicProductService;
  * <p>Both routes go through the same service entry point and produce identical
  * results. Filter semantics: AND across different keys, OR within the same key.
  */
+@PublicEndpoint("Unauthenticated storefront catalog reads (ACTIVE products only)")
 @RestController
 @RequestMapping("/api/v1/public/products")
 public class PublicProductController {

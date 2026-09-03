@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.viescloud.eco.viesspringutils.interfaces.annotation.RequiresAuthority;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.viescloud.llc.venzora.dao.product.TaxRuleDao;
@@ -34,6 +36,7 @@ public class TaxRuleImportExportController {
         this.taxRuleDao = taxRuleDao;
     }
 
+    @RequiresAuthority("rules:read")
     @GetMapping("/export")
     public List<TaxRule> export() {
         return taxRuleDao.findAll();
@@ -44,6 +47,7 @@ public class TaxRuleImportExportController {
      * entire set when {@code ?mode=replace} is given. Incoming {@code id} fields
      * are ignored — every imported rule receives a fresh UUID.
      */
+    @RequiresAuthority("rules:update")
     @PostMapping("/import")
     @Transactional
     public TaxImportResponse importRules(

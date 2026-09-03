@@ -22,4 +22,10 @@ public class UserInfoController extends ViesAutoAdminCheckController<UUID, UserI
         return true;
     }
 
+    /** Authority-based gating (permission-system.md): the seven verbs check customers:read/create/update/delete. */
+    @Override
+    protected String resourceName() {
+        return "customers";
+    }
+
 }

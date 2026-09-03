@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.viescloud.eco.viesspringutils.interfaces.annotation.PublicEndpoint;
+
 import com.viescloud.eco.viesspringutils.model.PageResponse;
 import com.viescloud.llc.venzora.dao.product.ReviewDao;
 import com.viescloud.llc.venzora.model.product.Review;
@@ -19,6 +21,7 @@ import com.viescloud.llc.venzora.model.product.Review;
  * Public, unauthenticated reviews list for a product. Used by the storefront's
  * product-detail page to render the existing reviews block.
  */
+@PublicEndpoint("Unauthenticated storefront review reads")
 @RestController
 @RequestMapping("/api/v1/public/products")
 public class PublicReviewController {

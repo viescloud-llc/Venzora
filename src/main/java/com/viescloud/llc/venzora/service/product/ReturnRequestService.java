@@ -46,6 +46,12 @@ public class ReturnRequestService extends VenzoraCustomUserAccessService<UUID, R
         return true;
     }
 
+    /** Same pattern as orders: back-office access keys on {@code returns:manage}. */
+    @Override
+    protected String adminBypassAuthority() {
+        return "returns:manage";
+    }
+
     /**
      * Stamp the server-owned fields on create (contract § 7.8: returnNumber is
      * server-generated, userId comes from the caller). Before this, the

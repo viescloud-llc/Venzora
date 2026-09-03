@@ -8,10 +8,9 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.server.ResponseStatusException;
 
-import com.viescloud.eco.viesspringutils.auto.config.ViesPermission;
 import com.viescloud.eco.viesspringutils.controller.ViesControllerWithUserAccess;
+import com.viescloud.eco.viesspringutils.interfaces.annotation.RequiresAuthority;
 import com.viescloud.llc.venzora.model.product.OrderFulfillment;
 import com.viescloud.llc.venzora.service.product.OrderFulfillmentService;
 
@@ -19,25 +18,21 @@ import com.viescloud.llc.venzora.service.product.OrderFulfillmentService;
 @RequestMapping("/api/v1/orders")
 public class OrderFulfillmentController extends ViesControllerWithUserAccess<UUID, OrderFulfillment, OrderFulfillmentService> {
 
-    private final ViesPermission viesPermission;
-
-    public OrderFulfillmentController(OrderFulfillmentService service, ViesPermission viesPermission) {
+    public OrderFulfillmentController(OrderFulfillmentService service) {
         super(service);
-        this.viesPermission = viesPermission;
     }
 
     /**
      * Orders are financial records — the base class would let the row's OWNER
      * delete it, but a buyer must never be able to erase their own order.
-     * PUT/PATCH are already admin-gated in {@link OrderFulfillmentService};
-     * DELETE has no service-side validation hook, so the gate lives here.
+     * PUT/PATCH are admin-gated in {@link OrderFulfillmentService}; DELETE has
+     * no service-side validation hook, so the {@code orders:delete} authority
+     * gate lives here (declaratively, via the lib interceptor).
      */
     @Override
+    @RequiresAuthority("orders:delete")
     public ResponseEntity<HttpStatus> delete(@RequestHeader(value = "user_id", required = false) String user_id,
                                              @PathVariable("id") UUID id) {
-        if (!viesPermission.hasAdminPermission(user_id)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Orders can only be deleted by an admin");
-        }
         return super.delete(user_id, id);
     }
 }

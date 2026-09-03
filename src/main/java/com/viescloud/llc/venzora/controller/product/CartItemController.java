@@ -22,4 +22,10 @@ public class CartItemController extends ViesAutoAdminCheckController<UUID, CartI
         return true;
     }
 
+    /** Authority-based gating (permission-system.md): the seven verbs check orders:read/create/update/delete. */
+    @Override
+    protected String resourceName() {
+        return "orders";
+    }
+
 }

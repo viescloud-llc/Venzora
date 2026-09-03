@@ -22,4 +22,10 @@ public class StockMovementController extends ViesAutoAdminCheckController<UUID, 
         return true;
     }
 
+    /** Authority-based gating (permission-system.md): the seven verbs check inventory:read/create/update/delete. */
+    @Override
+    protected String resourceName() {
+        return "inventory";
+    }
+
 }

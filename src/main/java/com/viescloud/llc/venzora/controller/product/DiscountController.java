@@ -22,4 +22,10 @@ public class DiscountController extends ViesAutoAdminCheckController<UUID, Disco
         return true;
     }
 
+    /** Authority-based gating (permission-system.md): the seven verbs check discounts:read/create/update/delete. */
+    @Override
+    protected String resourceName() {
+        return "discounts";
+    }
+
 }

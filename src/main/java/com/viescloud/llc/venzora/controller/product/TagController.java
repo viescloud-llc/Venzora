@@ -22,4 +22,10 @@ public class TagController extends ViesAutoAdminCheckController<UUID, Tag, TagSe
         return true;
     }
 
+    /** Authority-based gating (permission-system.md): the seven verbs check catalog:read/create/update/delete. */
+    @Override
+    protected String resourceName() {
+        return "catalog";
+    }
+
 }

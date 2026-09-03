@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.viescloud.eco.viesspringutils.interfaces.annotation.RequiresUser;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.viescloud.eco.viesspringutils.model.PageResponse;
@@ -30,6 +32,7 @@ import com.viescloud.llc.venzora.util.UserIdHeader;
  * header; every operation is filtered/forced to that user — {@code Review.userId} is
  * server-stamped on create and verified on update / delete.
  */
+@RequiresUser
 @RestController
 @RequestMapping("/api/v1/me/reviews")
 public class MyReviewController {

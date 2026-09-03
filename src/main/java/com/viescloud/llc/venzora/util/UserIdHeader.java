@@ -14,10 +14,17 @@ public final class UserIdHeader {
 
     private UserIdHeader() {}
 
-    /** Returns the parsed UUID, or throws 401 (missing) / 400 (malformed). */
+    /** Returns the parsed UUID, or throws 401 (missing / unauthenticated sentinel) / 400 (malformed). */
     public static UUID require(String header) {
         if (header == null || header.isBlank()) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "user_id header required");
+        }
+        // "0" and "-1" are the framework's no-authenticated-user sentinels (the
+        // controller default and the JWT filter's fallback). An expired/invalid
+        // token surfaces as one of these — that's an auth failure, not a
+        // malformed request.
+        if ("0".equals(header) || "-1".equals(header)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Not authenticated (token missing or expired)");
         }
         try {
             return UUID.fromString(header);

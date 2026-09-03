@@ -124,6 +124,8 @@ export interface PageResponse<T> {
 
 Build one error-mapping service on the frontend.
 
+**Required relations are validated before the write.** A `POST`/`PUT` whose required `@ManyToOne` reference is missing, carries no `id`, or points at a row that does not exist is rejected `400` with the field named in `reason` — `category is required`, `category.id is required`, `category not found: <uuid>`. Read `reason` first; it is the field-level detail. Note that errors raised by the framework's own CRUD validation currently arrive with `reason: null` — see [`vies-spring-utils-fix-checklist.md`](vies-spring-utils-fix-checklist.md).
+
 ---
 
 ## 3. Base shapes (inherited)
@@ -453,7 +455,7 @@ export interface Cart extends TrackedTimeStampUserAccess {
 }
 ```
 
-`userId` / `ownerUserId` are server-stamped on POST — do not set in the body. The checkout orchestrator marks the cart `active: false` when it deactivates a cart on `/orders/checkout`.
+`userId` / `ownerUserId` are server-stamped from the `user_id` header on POST — do not set in the body. `totalPrice` and `active` default server-side too, so `POST {}` is a valid create-empty-then-add-items call and an empty `items` array is legal. The checkout orchestrator marks the cart `active: false` when it deactivates a cart on `/orders/checkout`.
 
 ### 7.2 `CartItem`
 
@@ -622,22 +624,27 @@ export interface ReturnRequest extends TrackedTimeStampUserAccess {
 
 `/api/v1/stock/movements` · **Admin**
 
-Audit log of inventory changes. Treat append-only from the UI's perspective.
+Ledger of inventory changes. Treat append-only from the UI's perspective.
+
+**Creating a movement moves stock.** `POST` is not a passive log write — the server applies `quantityChange` to `ProductVariant.stockQuantity` and stamps the resulting balance onto `quantityAfter`, both in one transaction. This is the supported way to adjust inventory outside checkout; do not also PATCH the variant's `stockQuantity`, or the adjustment lands twice.
 
 ```ts
 export interface StockMovement extends TrackedTimeStamp {
   id?: string;
   productVariant: ProductVariant;
   movementType: StockMovementType;
-  quantityChange: number;          // Long
-  quantityAfter: number;           // Long — denormalized running total
+  quantityChange: number;          // Long — SIGNED delta: + adds, - removes
+  quantityAfter?: number;          // Long — server-computed balance; ignored on POST
   reason?: string;
   reference?: string;              // free-form, e.g. order id
   userId?: string;                 // UUID — who performed it
 }
 ```
 
-Adjustments insert new rows; never PATCH `quantityAfter` directly.
+- **`quantityChange` carries the sign.** `movementType` is descriptive metadata and does not flip it — a `SALE` must be sent as a negative number.
+- **`quantityAfter` is server-owned.** Whatever you send is overwritten. Never compute it client-side, and never PATCH it.
+- A movement that would drive stock below zero is rejected `400` and nothing is written — neither the movement nor the stock change.
+- Corrections are entered as a new compensating movement. Editing a movement through PUT/PATCH updates the row but does **not** re-apply a delta, so the balance would drift.
 
 ### 7.10 `ShippingRule`
 

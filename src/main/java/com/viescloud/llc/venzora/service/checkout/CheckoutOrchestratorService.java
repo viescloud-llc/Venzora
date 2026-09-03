@@ -45,6 +45,7 @@ import com.viescloud.llc.venzora.model.product.ProductVariant;
 import com.viescloud.llc.venzora.model.product.ShippingRule;
 import com.viescloud.llc.venzora.model.product.type.FulfillmentStatus;
 import com.viescloud.llc.venzora.model.share_enum.Currency;
+import com.viescloud.llc.venzora.service.product.StockMovementService;
 import com.viescloud.llc.venzora.service.product.TaxCalculator;
 
 /**
@@ -76,6 +77,7 @@ public class CheckoutOrchestratorService {
     private final ShippingRuleDao shippingRuleDao;
     private final TaxCalculator taxCalculator;
     private final ObjectProvider<CheckoutProviderRegistry> checkoutProvider;
+    private final StockMovementService stockMovementService;
 
     public CheckoutOrchestratorService(CartDao cartDao,
                                        OrderFulfillmentDao fulfillmentDao,
@@ -83,7 +85,8 @@ public class CheckoutOrchestratorService {
                                        ProductVariantDao variantDao,
                                        ShippingRuleDao shippingRuleDao,
                                        TaxCalculator taxCalculator,
-                                       ObjectProvider<CheckoutProviderRegistry> checkoutProvider) {
+                                       ObjectProvider<CheckoutProviderRegistry> checkoutProvider,
+                                       StockMovementService stockMovementService) {
         this.cartDao = cartDao;
         this.fulfillmentDao = fulfillmentDao;
         this.discountDao = discountDao;
@@ -91,6 +94,7 @@ public class CheckoutOrchestratorService {
         this.shippingRuleDao = shippingRuleDao;
         this.taxCalculator = taxCalculator;
         this.checkoutProvider = checkoutProvider;
+        this.stockMovementService = stockMovementService;
     }
 
     @Transactional
@@ -160,6 +164,34 @@ public class CheckoutOrchestratorService {
                     .build());
         }
 
+        // The provider charges the SUM OF LINE ITEMS (the library sends PayPal a
+        // single total with no per-item breakdown), so tax, shipping, and the
+        // discount must ride along as synthetic lines or the buyer is charged
+        // the bare subtotal (BE-9 — every sale undercollected). The discount
+        // line is derived as subtotal+tax+shipping−total rather than
+        // discountAmount so the item sum ALWAYS equals the (zero-floored)
+        // fulfillment total.
+        if (tax.compareTo(BigDecimal.ZERO) > 0) {
+            lineItems.add(CheckoutLineItem.builder()
+                    .sku("TAX").name("Tax").quantity(1)
+                    .unitPrice(tax).subtotal(tax)
+                    .build());
+        }
+        if (shippingCost.compareTo(BigDecimal.ZERO) > 0) {
+            lineItems.add(CheckoutLineItem.builder()
+                    .sku("SHIPPING").name("Shipping").quantity(1)
+                    .unitPrice(shippingCost).subtotal(shippingCost)
+                    .build());
+        }
+        BigDecimal effectiveDeduction = subtotal.add(tax).add(shippingCost).subtract(total);
+        if (effectiveDeduction.compareTo(BigDecimal.ZERO) > 0) {
+            lineItems.add(CheckoutLineItem.builder()
+                    .sku("DISCOUNT").name(discount != null ? "Discount (" + discount.getCode() + ")" : "Discount")
+                    .quantity(1)
+                    .unitPrice(effectiveDeduction.negate()).subtotal(effectiveDeduction.negate())
+                    .build());
+        }
+
         CheckoutCreateOrderRequest checkoutReq = CheckoutCreateOrderRequest.builder()
                 .currency(currency.name())
                 .items(lineItems)
@@ -175,6 +207,10 @@ public class CheckoutOrchestratorService {
         OrderFulfillment fulfillment = new OrderFulfillment();
         fulfillment.setOrderNumber(generateOrderNumber());
         fulfillment.setUserId(buyerId);
+        // Row-level access column. The orchestrator saves through the raw DAO, so
+        // ViesControllerWithUserAccess's automatic stamping never runs -- without
+        // this the order is invisible to everyone (empty lists, 403 on get).
+        fulfillment.setOwnerUserId(buyerId);
         fulfillment.setCheckoutOrderId(checkoutOrder.getId());
         fulfillment.setCurrency(currency);
         fulfillment.setSubtotal(subtotal);
@@ -224,6 +260,13 @@ public class CheckoutOrchestratorService {
         if (fulfillment.getCheckoutOrderId() == null) {
             throw bad("Order has no linked checkout");
         }
+        // Idempotency: the webhook -> fulfillment listener may have already
+        // advanced this order (PayPal webhooks often land before the buyer's
+        // browser gets back to us). Treat a repeat complete() as success rather
+        // than a state error -- the money moved exactly once either way.
+        if (fulfillment.getStatus() == FulfillmentStatus.PROCESSING) {
+            return fulfillment;
+        }
         if (fulfillment.getStatus() != FulfillmentStatus.PENDING) {
             throw bad("Order is not in PENDING state (current: " + fulfillment.getStatus() + ")");
         }
@@ -233,22 +276,27 @@ public class CheckoutOrchestratorService {
         // configured provider, so resolve directly.
         registry().orderService("paypal").captureOrder(fulfillment.getCheckoutOrderId());
 
-        for (OrderFulfillmentItem item : fulfillment.getItems()) {
-            ProductVariant pv = item.getProductVariant();
-            long current = pv.getStockQuantity() == null ? 0L : pv.getStockQuantity();
-            long updated = current - item.getQuantity();
-            if (updated < 0) {
-                throw bad("Stock went negative for variant " + pv.getSku() + " — race detected");
-            }
-            pv.setStockQuantity(updated);
-            variantDao.save(pv);
-        }
-
-        fulfillment.setStatus(FulfillmentStatus.PROCESSING);
         if (fulfillment.getMetadata() == null) {
             fulfillment.setMetadata(new HashMap<>());
         }
-        fulfillment.getMetadata().put("checkout.capturedAt", Instant.now().toString());
+        // Deduped against CheckoutFulfillmentListener via the shared flag: the
+        // capture above publishes a status-change event that the listener may
+        // have consumed synchronously, recording the sale before we get here.
+        // recordCheckoutSale both moves the stock AND writes the SALE ledger
+        // row (BE-8 — the old silent decrement left /inventory/movements blind
+        // to checkout sales); insufficient stock throws the standard 400,
+        // rolling the capture transaction back (race detection preserved).
+        if (!"true".equals(fulfillment.getMetadata().get(CheckoutFulfillmentListener.STOCK_DECREMENTED_FLAG))) {
+            for (OrderFulfillmentItem item : fulfillment.getItems()) {
+                stockMovementService.recordCheckoutSale(
+                        item.getProductVariant().getId(), item.getQuantity(),
+                        fulfillment.getUserId(), fulfillment.getOrderNumber());
+            }
+            fulfillment.getMetadata().put(CheckoutFulfillmentListener.STOCK_DECREMENTED_FLAG, "true");
+        }
+
+        fulfillment.setStatus(FulfillmentStatus.PROCESSING);
+        fulfillment.getMetadata().putIfAbsent("checkout.capturedAt", Instant.now().toString());
         return fulfillmentDao.save(fulfillment);
     }
 

@@ -105,6 +105,7 @@ public class OrderFulfillment extends TrackedTimeStampUserAccess {
         @AttributeOverride(name = "state", column = @Column(name = "shipping_state", columnDefinition = "TEXT")),
         @AttributeOverride(name = "postalCode", column = @Column(name = "shipping_postal_code", columnDefinition = "TEXT")),
         @AttributeOverride(name = "country", column = @Column(name = "shipping_country", columnDefinition = "TEXT")),
+        @AttributeOverride(name = "district", column = @Column(name = "shipping_district", columnDefinition = "TEXT")),
         @AttributeOverride(name = "type", column = @Column(name = "shipping_type"))
     })
     private Address shippingAddress;
@@ -117,6 +118,7 @@ public class OrderFulfillment extends TrackedTimeStampUserAccess {
         @AttributeOverride(name = "state", column = @Column(name = "billing_state", columnDefinition = "TEXT")),
         @AttributeOverride(name = "postalCode", column = @Column(name = "billing_postal_code", columnDefinition = "TEXT")),
         @AttributeOverride(name = "country", column = @Column(name = "billing_country", columnDefinition = "TEXT")),
+        @AttributeOverride(name = "district", column = @Column(name = "billing_district", columnDefinition = "TEXT")),
         @AttributeOverride(name = "type", column = @Column(name = "billing_type"))
     })
     private Address billingAddress;

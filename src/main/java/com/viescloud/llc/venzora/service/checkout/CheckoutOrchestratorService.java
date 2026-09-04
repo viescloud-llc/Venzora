@@ -10,6 +10,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.UUID;
 import java.util.stream.Stream;
 
@@ -27,6 +29,7 @@ import com.viescloud.eco.viesspringutils.auto.model.checkout.CheckoutOrder;
 import com.viescloud.eco.viesspringutils.auto.service.checkout.CheckoutProviderRegistry;
 import com.viescloud.eco.viesspringutils.util.DateTime;
 import com.viescloud.llc.venzora.dao.product.CartDao;
+import com.viescloud.llc.venzora.dao.product.CategoryDao;
 import com.viescloud.llc.venzora.model.address.Address;
 import com.viescloud.llc.venzora.dao.product.DiscountDao;
 import com.viescloud.llc.venzora.dao.product.OrderFulfillmentDao;
@@ -38,6 +41,7 @@ import com.viescloud.llc.venzora.model.checkout.DiscountValidationResponse;
 import com.viescloud.llc.venzora.model.checkout.TaxCalculation;
 import com.viescloud.llc.venzora.model.product.Cart;
 import com.viescloud.llc.venzora.model.product.CartItem;
+import com.viescloud.llc.venzora.model.product.Category;
 import com.viescloud.llc.venzora.model.product.Discount;
 import com.viescloud.llc.venzora.model.product.OrderFulfillment;
 import com.viescloud.llc.venzora.model.product.OrderFulfillmentItem;
@@ -45,6 +49,7 @@ import com.viescloud.llc.venzora.model.product.ProductVariant;
 import com.viescloud.llc.venzora.model.product.ShippingRule;
 import com.viescloud.llc.venzora.model.product.type.FulfillmentStatus;
 import com.viescloud.llc.venzora.model.share_enum.Currency;
+import com.viescloud.llc.venzora.service.product.ProductMatching;
 import com.viescloud.llc.venzora.service.product.StockMovementService;
 import com.viescloud.llc.venzora.service.product.TaxCalculator;
 
@@ -78,6 +83,7 @@ public class CheckoutOrchestratorService {
     private final TaxCalculator taxCalculator;
     private final ObjectProvider<CheckoutProviderRegistry> checkoutProvider;
     private final StockMovementService stockMovementService;
+    private final CategoryDao categoryDao;
 
     public CheckoutOrchestratorService(CartDao cartDao,
                                        OrderFulfillmentDao fulfillmentDao,
@@ -86,7 +92,8 @@ public class CheckoutOrchestratorService {
                                        ShippingRuleDao shippingRuleDao,
                                        TaxCalculator taxCalculator,
                                        ObjectProvider<CheckoutProviderRegistry> checkoutProvider,
-                                       StockMovementService stockMovementService) {
+                                       StockMovementService stockMovementService,
+                                       CategoryDao categoryDao) {
         this.cartDao = cartDao;
         this.fulfillmentDao = fulfillmentDao;
         this.discountDao = discountDao;
@@ -95,6 +102,7 @@ public class CheckoutOrchestratorService {
         this.taxCalculator = taxCalculator;
         this.checkoutProvider = checkoutProvider;
         this.stockMovementService = stockMovementService;
+        this.categoryDao = categoryDao;
     }
 
     @Transactional
@@ -132,6 +140,8 @@ public class CheckoutOrchestratorService {
 
         Discount discount = null;
         BigDecimal discountAmount = BigDecimal.ZERO;
+        BigDecimal eligibleSubtotal = subtotal;
+        Set<UUID> eligibleVariantIds = null; // null = every line
         if (req.getDiscountCode() != null && !req.getDiscountCode().isBlank()) {
             discount = discountDao.findByCode(req.getDiscountCode())
                     .orElseThrow(() -> bad("Discount code not found: " + req.getDiscountCode()));
@@ -139,11 +149,23 @@ public class CheckoutOrchestratorService {
             if (rejection != null) {
                 throw bad(rejection);
             }
-            discountAmount = computeDiscount(discount, subtotal);
+            // Product-scoped discounts apply only to matching lines: the amount
+            // (and any percentage / cap) is computed on the ELIGIBLE subtotal.
+            if (discount.hasProductMatchers()) {
+                Eligibility el = eligibleLines(discount, cart);
+                if (el.subtotal.signum() <= 0) {
+                    throw bad("No items in the cart qualify for discount " + discount.getCode());
+                }
+                eligibleSubtotal = el.subtotal;
+                eligibleVariantIds = el.variantIds;
+            }
+            discountAmount = computeDiscount(discount, eligibleSubtotal);
         }
 
-        TaxCalculation taxCalc = taxCalculator.calculate(
-                subtotal.subtract(discountAmount), req.getShippingAddress());
+        // Per line item: product matchers (tags/categories/attributes) mean each
+        // line may hit a different rule; the discount is prorated across the
+        // lines it applied to.
+        TaxCalculation taxCalc = taxCalculator.calculateForCart(cart, discountAmount, req.getShippingAddress(), eligibleVariantIds);
         BigDecimal tax = taxCalc.getTax();
         BigDecimal shippingCost = computeShipping(currency, subtotal);
         BigDecimal total = subtotal.subtract(discountAmount).add(tax).add(shippingCost);
@@ -240,7 +262,7 @@ public class CheckoutOrchestratorService {
         fulfillment = fulfillmentDao.save(fulfillment);
 
         if (discount != null) {
-            discount.setCurrentUses(discount.getCurrentUses() + 1);
+            discount.setCurrentUses((discount.getCurrentUses() == null ? 0 : discount.getCurrentUses()) + 1);
             discountDao.save(discount);
         }
 
@@ -337,7 +359,15 @@ public class CheckoutOrchestratorService {
             return DiscountValidationResponse.rejected(rejection);
         }
 
-        return DiscountValidationResponse.ok(computeDiscount(discount, subtotal));
+        BigDecimal eligibleSubtotal = subtotal;
+        if (discount.hasProductMatchers()) {
+            Eligibility el = eligibleLines(discount, cart);
+            if (el.subtotal.signum() <= 0) {
+                return DiscountValidationResponse.rejected("No items in the cart qualify for discount " + discount.getCode());
+            }
+            eligibleSubtotal = el.subtotal;
+        }
+        return DiscountValidationResponse.ok(computeDiscount(discount, eligibleSubtotal), eligibleSubtotal);
     }
 
     // ---- helpers ----
@@ -366,6 +396,7 @@ public class CheckoutOrchestratorService {
             put(meta, "discount.code", discount.getCode());
             put(meta, "discount.appliedAmount", discountAmount.toPlainString());
             put(meta, "discount.type", discount.getDiscountType().name());
+            put(meta, "discount.scoped", String.valueOf(discount.hasProductMatchers()));
             put(meta, "discount.ruleId", discount.getId() == null ? null : discount.getId().toString());
         }
 
@@ -374,8 +405,23 @@ public class CheckoutOrchestratorService {
             put(meta, "tax.ruleName", taxCalc.getAppliedRuleName());
             put(meta, "tax.rate", taxCalc.getRate().toPlainString());
             put(meta, "tax.jurisdiction", formatJurisdiction(req.getShippingAddress()));
+        } else if (taxCalc != null && taxCalc.isMixed()) {
+            // Several rules applied (product-level matchers): effective rate + the set of rules.
+            put(meta, "tax.rate", taxCalc.getRate().toPlainString());
+            put(meta, "tax.mixed", "true");
+            put(meta, "tax.rules", taxCalc.getAppliedRuleName());
+            put(meta, "tax.jurisdiction", formatJurisdiction(req.getShippingAddress()));
         } else {
             put(meta, "tax.rate", "0");
+        }
+        if (taxCalc != null && taxCalc.getLines() != null) {
+            for (TaxCalculation.TaxLine line : taxCalc.getLines()) {
+                if (line.getSku() == null) continue;
+                put(meta, "tax.line." + line.getSku(), line.getRuleName() == null
+                        ? "no rule (0%) on " + line.getTaxable().toPlainString()
+                        : line.getRate().toPlainString() + "% via " + line.getRuleName()
+                          + " on " + line.getTaxable().toPlainString() + " = " + line.getTax().toPlainString());
+            }
         }
 
         Optional<ShippingRule> shipRule = shippingRuleDao.findByCurrency(currency);
@@ -399,7 +445,7 @@ public class CheckoutOrchestratorService {
 
     private static String formatJurisdiction(Address addr) {
         if (addr == null) return "";
-        return Stream.of(addr.getCountry(), addr.getState(), addr.getCity(), addr.getPostalCode())
+        return Stream.of(addr.getCountry(), addr.getState(), addr.getCity(), addr.getPostalCode(), addr.getDistrict())
                 .filter(s -> s != null && !s.isBlank())
                 .reduce((a, b) -> a + "/" + b)
                 .orElse("");
@@ -432,6 +478,23 @@ public class CheckoutOrchestratorService {
      * reason. Used by both {@link #start} (which throws 400) and
      * {@link #validateDiscountForCart} (which returns the reason as JSON).
      */
+    /** Lines a product-scoped discount applies to, with their subtotal. */
+    private record Eligibility(BigDecimal subtotal, Set<UUID> variantIds) {}
+
+    private Eligibility eligibleLines(Discount discount, Cart cart) {
+        Map<UUID, Category> categoriesById = ProductMatching.categoriesById(categoryDao);
+        BigDecimal sum = BigDecimal.ZERO;
+        Set<UUID> ids = new HashSet<>();
+        for (CartItem ci : cart.getItems()) {
+            ProductVariant pv = ci.getProductVariant();
+            if (pv == null || pv.getId() == null) continue;
+            if (!discount.matchesProduct(ProductMatching.contextFor(pv, categoriesById))) continue;
+            ids.add(pv.getId());
+            sum = sum.add(ci.getPriceAtTime().multiply(BigDecimal.valueOf(ci.getQuantity())));
+        }
+        return new Eligibility(sum, ids);
+    }
+
     private String checkDiscount(Discount d, BigDecimal subtotal) {
         if (!Boolean.TRUE.equals(d.getActive())) {
             return "Discount is inactive";
@@ -443,7 +506,8 @@ public class CheckoutOrchestratorService {
         if (d.getValidTo() != null && now.isAfter(d.getValidTo())) {
             return "Discount expired (valid to " + d.getValidTo().getDateTime() + ")";
         }
-        if (d.getMaxUses() != null && d.getCurrentUses() >= d.getMaxUses()) {
+        // maxUses null or <= 0 = unlimited (the Manager sends 0 for "no limit").
+        if (!d.isUnlimited() && (d.getCurrentUses() == null ? 0 : d.getCurrentUses()) >= d.getMaxUses()) {
             return "Discount usage limit reached";
         }
         if (d.getMinimumOrderAmount() != null

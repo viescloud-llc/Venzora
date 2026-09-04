@@ -31,6 +31,10 @@ public class Address implements Serializable {
     
     @Column(columnDefinition = "TEXT")
     private String country;
+
+    /** Optional sub-city/administrative district (used by addresses in e.g. VN, TW, KR, IN). */
+    @Column(columnDefinition = "TEXT")
+    private String district;
     
     @Enumerated(jakarta.persistence.EnumType.STRING)
     private AddressType type;

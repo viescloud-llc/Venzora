@@ -628,21 +628,20 @@ public class ReportService {
         }
     }
 
-    /** Picks the most-specific currently-active TaxRule that matches a jurisdiction tuple. */
+    /**
+     * Picks the most-specific currently-active TaxRule that matches a jurisdiction
+     * tuple, using the rule's own alias-aware location matching. Rules carrying
+     * PRODUCT matchers are skipped: they cannot be attributed to a jurisdiction
+     * alone (informational column only).
+     */
     private static TaxReport.MatchingRule matchingRuleFor(JurisdictionKey k, List<TaxRule> active) {
         if (active.isEmpty()) return null;
         TaxRule best = null;
         int bestScore = -1;
         for (TaxRule r : active) {
-            if (!eq(r.getCountry(), k.country)
-                    || !eq(r.getState(), k.state)
-                    || !eq(r.getCity(), k.city)
-                    || !eq(r.getPostalCode(), k.postalCode)) continue;
-            int score = 0;
-            if (r.getCountry() != null) score++;
-            if (r.getState() != null) score++;
-            if (r.getCity() != null) score++;
-            if (r.getPostalCode() != null) score++;
+            if (r.hasProductMatchers()) continue;
+            if (!r.matchesLocation(k.country, k.state, k.city, k.postalCode, null)) continue;
+            int score = r.locationSpecificity();
             if (score > bestScore || (score == bestScore && best != null
                     && r.getPriority() != null && best.getPriority() != null
                     && r.getPriority() > best.getPriority())) {
@@ -652,13 +651,6 @@ public class ReportService {
         }
         return best == null ? null
                 : new TaxReport.MatchingRule(best.getId(), best.getName(), best.getRate());
-    }
-
-    /** Matcher equality used by matchingRuleFor: null matcher matches anything. */
-    private static boolean eq(String matcher, String actual) {
-        if (matcher == null) return true;
-        if (actual == null) return false;
-        return matcher.trim().equalsIgnoreCase(actual.trim());
     }
 
     private static final class SalesSummaryAccumulator {

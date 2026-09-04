@@ -115,15 +115,35 @@ public class StockMovementService extends VenzoraService<UUID, StockMovement, St
      * recorded exactly once.
      */
     public StockMovement recordCheckoutSale(UUID variantId, int quantity, UUID buyerUserId, String orderNumber) {
+        return recordOrderMovement(StockMovementType.SALE, variantId, -(long) quantity, buyerUserId, orderNumber, "Checkout sale");
+    }
+
+    /**
+     * Restock after a refund/return: one {@code RETURN} ledger row per item
+     * whose creation adds the quantity back to the variant's stock. Used by the
+     * order restock endpoint.
+     */
+    public StockMovement recordRestock(UUID variantId, int quantity, UUID actorUserId, String orderNumber, String reason) {
+        return recordOrderMovement(StockMovementType.RETURN, variantId, (long) quantity, actorUserId, orderNumber,
+                reason == null || reason.isBlank() ? "Restock after refund/return" : reason);
+    }
+
+    /**
+     * Generic order-linked ledger write: builds the movement and posts it
+     * through the standard pipeline (validation, delta applied, quantityAfter
+     * stamped) so balance and ledger can never diverge.
+     */
+    public StockMovement recordOrderMovement(StockMovementType type, UUID variantId, long quantityChange,
+                                             UUID userId, String reference, String reason) {
         StockMovement movement = new StockMovement();
         ProductVariant ref = new ProductVariant();
         ref.setId(variantId);
         movement.setProductVariant(ref);
-        movement.setMovementType(StockMovementType.SALE);
-        movement.setQuantityChange(-(long) quantity);
-        movement.setReason("Checkout sale");
-        movement.setReference(orderNumber);
-        movement.setUserId(buyerUserId);
+        movement.setMovementType(type);
+        movement.setQuantityChange(quantityChange);
+        movement.setReason(reason);
+        movement.setReference(reference);
+        movement.setUserId(userId);
         return this.post(movement);
     }
 

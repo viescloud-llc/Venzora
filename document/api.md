@@ -713,6 +713,22 @@ Response:
 
 These wrap multi-entity work into single atomic transactions. They are **not** CRUD; the seven verbs don't apply.
 
+
+**Matching model (2026-09-04):**
+- Location matchers: `country`, `state`, `city`, `postalCode`, **`district`** (new, optional) — a SET matcher
+  must equal the shipping-address field (case-insensitive, trimmed); empty = match any.
+- **`countryAliases[]` / `stateAliases[]`** — alternative spellings that also satisfy the country/state
+  matcher ("United States", "USA" for `US`). Aliases do not add specificity.
+- Product matchers (all optional; empty = any product; set = the product must carry ANY of them):
+  **`tags[]`**, **`categories[]`** (the product's category OR any ancestor), **`attributeDefinitions[]`**
+  (product-level attributes or the sold variant's attribute values). Sent/returned as `{id}` references.
+- Specificity = set location matchers + set product matchers (max 8); `priority` breaks ties.
+- Because product matchers exist, **checkout computes tax per line item**: each line picks its own best rule,
+  the order discount is prorated across lines (remainder on the last line so Σ taxable = subtotal − discount),
+  and the order's `metadata` carries `tax.line.<sku>` entries plus either `tax.ruleId/ruleName/rate`
+  (one rule for every line) or `tax.mixed=true`, `tax.rules`, and the effective `tax.rate`.
+- `Address` (shipping/billing, user addresses) gained an optional `district` field.
+
 ### 8.1 Checkout — `POST /api/v1/orders/checkout`
 
 Header `user_id` required. Wraps cart validation, discount validation, stock pre-check, total computation, `OrderFulfillment` creation, library `CheckoutOrder` creation, and cart deactivation in one transaction.

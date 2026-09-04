@@ -1,5 +1,6 @@
 package com.viescloud.llc.venzora.config;
 
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -28,25 +29,42 @@ public class VenzoraRoleSeeder {
 
     private final RoleDao roleDao;
 
+    // maintenance:bypass on every staff role: staff keep working while customers
+    // are held by the maintenance gate. orders:restock lets finance put refunded
+    // goods back on the shelf (inventory admins get it via inventory:*).
     private static final Map<String, Set<String>> ROLES = new LinkedHashMap<>() {{
-        put("SHIPPING_ADMIN", Set.of("shipments:*", "orders:read", "orders:update", "orders:manage", "returns:read"));
-        put("INVENTORY_ADMIN", Set.of("inventory:*", "catalog:read"));
-        put("CATALOG_ADMIN", Set.of("catalog:*", "schema:*"));
-        put("FINANCE_ADMIN", Set.of("checkout:*", "orders:*", "orders:manage",
-                "returns:*", "returns:manage", "discounts:*", "reports:read"));
+        put("SHIPPING_ADMIN", Set.of("shipments:*", "orders:read", "orders:update", "orders:manage",
+                "returns:read", "maintenance:bypass"));
+        put("INVENTORY_ADMIN", Set.of("inventory:*", "catalog:read", "maintenance:bypass"));
+        put("CATALOG_ADMIN", Set.of("catalog:*", "schema:*", "maintenance:bypass"));
+        put("FINANCE_ADMIN", Set.of("checkout:*", "orders:*", "orders:manage", "orders:restock",
+                "returns:*", "returns:manage", "discounts:*", "reports:read", "maintenance:bypass"));
     }};
 
+    /**
+     * Create-if-absent, and ADDITIVE for existing seeded roles: baseline grants
+     * introduced by a later release (e.g. maintenance:bypass) are unioned in,
+     * but nothing an admin granted by hand is ever removed.
+     */
     @PostConstruct
     public void seed() {
         try {
             for (var entry : ROLES.entrySet()) {
-                if (roleDao.findByName(entry.getKey()).isEmpty()) {
+                Role existing = roleDao.findByName(entry.getKey()).orElse(null);
+                if (existing == null) {
                     roleDao.save(Role.builder()
                             .name(entry.getKey())
                             .description("Auto created Venzora section-admin role")
-                            .permissions(entry.getValue())
+                            .permissions(new HashSet<>(entry.getValue()))
                             .build());
                     log.info("Seeded role {} with {}", entry.getKey(), entry.getValue());
+                } else {
+                    Set<String> merged = new HashSet<>(existing.getPermissions() == null ? Set.of() : existing.getPermissions());
+                    if (merged.addAll(entry.getValue())) {
+                        existing.setPermissions(merged);
+                        roleDao.save(existing);
+                        log.info("Added baseline grants to role {} -> {}", entry.getKey(), merged);
+                    }
                 }
             }
         } catch (Exception e) {
